@@ -144,7 +144,7 @@ public class HtmlParser {
 		return result;
 	}
 	
-	/*public static void main(String[] args) {
+	public static void main(String[] args) {
 		HashMap<String, ArrayList<String>> exts = new HashMap<>();
 		ArrayList<String> imageExtensions = new ArrayList<>();
 		ArrayList<String> videoExtensions = new ArrayList<>();
@@ -179,7 +179,7 @@ public class HtmlParser {
 		
 		String html = "";
 		try {
-			BufferedReader reader = new BufferedReader(new FileReader("index.html"));
+			BufferedReader reader = new BufferedReader(new FileReader("html/index.html"));
 			String line = "";
 			while ((line = reader.readLine()) != null) {
 				html += line;
@@ -192,5 +192,5 @@ public class HtmlParser {
 		
 		HtmlParser parser = new HtmlParser("http://www.blat.com/", html, exts);
 		parser.parse();
-	}*/
+	}
 }
