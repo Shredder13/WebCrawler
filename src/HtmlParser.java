@@ -62,16 +62,16 @@ public class HtmlParser {
 		}
 		
 		for (String s : images) {
-			System.out.println(s);
+			Log.d(s);
 		}
 		for (String s : videos) {
-			System.out.println(s);
+			Log.d(s);
 		}
 		for (String s : docs) {
-			System.out.println(s);
+			Log.d(s);
 		}
 		for (String s : links) {
-			System.out.println(s);
+			Log.d(s);
 		}
 	}
 	
@@ -144,7 +144,8 @@ public class HtmlParser {
 		return result;
 	}
 	
-	public static void main(String[] args) {
+	//TODO: Remove when submitting
+	/*public static void main(String[] args) {
 		HashMap<String, ArrayList<String>> exts = new HashMap<>();
 		ArrayList<String> imageExtensions = new ArrayList<>();
 		ArrayList<String> videoExtensions = new ArrayList<>();
@@ -179,7 +180,7 @@ public class HtmlParser {
 		
 		String html = "";
 		try {
-			BufferedReader reader = new BufferedReader(new FileReader("html/index.html"));
+			BufferedReader reader = new BufferedReader(new FileReader("html_test/index.html"));
 			String line = "";
 			while ((line = reader.readLine()) != null) {
 				html += line;
@@ -192,5 +193,5 @@ public class HtmlParser {
 		
 		HtmlParser parser = new HtmlParser("http://www.blat.com/", html, exts);
 		parser.parse();
-	}
+	}*/
 }
