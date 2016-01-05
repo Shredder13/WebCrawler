@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -12,10 +13,12 @@ public class ThreadPool {
 	private boolean closed = false;
 	private LinkedBlockingQueue<Task> mQ;
 	private boolean started = false;
+	private ArrayList<WorkerThread> workers;
 	
 	public ThreadPool(int maxThreads) {
 		mMaxThreads = maxThreads;
 		mQ = new LinkedBlockingQueue<>();
+		workers = new ArrayList<>();
 	}
 
 	/**
@@ -54,6 +57,10 @@ public class ThreadPool {
 		
 		mQ.clear();
 		
+		for (WorkerThread worker : workers) {
+			worker.interruptSilently();
+		}
+		
 		Log.d("Thread pool is shutdown");
 	}
 	
@@ -69,7 +76,9 @@ public class ThreadPool {
 		started = true;
 		
 		for (int i = 0; i < mMaxThreads; i++) {
-			new WorkerThread().start();
+			WorkerThread worker = new WorkerThread();
+			workers.add(worker);
+			worker.start();
 		}
 	}
 	
@@ -78,6 +87,8 @@ public class ThreadPool {
 	 *
 	 */
 	class WorkerThread extends Thread {
+		
+		private	boolean silentInterruption;
 		
 		/**
 		 * Dequeuing tasks from the queue and executes them until the thread pool is closed.
@@ -91,12 +102,19 @@ public class ThreadPool {
 					Task t = mQ.take();
 					t.run();
 				} catch (InterruptedException e) {
-					Log.d("WorkerThread.run() : Cannot pull task from queue!");
+					if (!silentInterruption) {
+						Log.d("WorkerThread.run() : Cannot pull task from queue!");
+					}
 					//e.printStackTrace();
 				} 				
 			}
 			
 			Log.d("WorkerThread.run() : Worker thread finished!");
+		}
+		
+		public void interruptSilently() {
+			silentInterruption = true;
+			interrupt();
 		}
 	}
 }
