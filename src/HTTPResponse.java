@@ -135,7 +135,7 @@ public class HTTPResponse {
             } else if (file.getAbsolutePath().endsWith("index.html")) {
             	bFile = buildIndex(bFile);
             } else if (file.getAbsolutePath().endsWith("execResult.html")) {
-            	//bFile = buildExecResult();
+            	bFile = buildExecResult(bFile);
             }
             if (fis != null) {
                 fis.close();
@@ -152,6 +152,7 @@ public class HTTPResponse {
     private byte[] buildExecResult(byte[] bFile) {
     	
     	WebCrawler crawler = WebCrawler.getInstance();
+    	String html = new String(bFile);
     	String formHolder = "";
     	StringBuilder historyHolderSb = new StringBuilder();
     	
@@ -175,7 +176,10 @@ public class HTTPResponse {
     	for (String link : crawler.getCrawlingHistory()) {
 			historyHolderSb.append(String.format("<a href=\"/%s\">%s</a><br>", link, link.replace("_", "-")));
 		}
-		return bFile;
+    	
+    	html = String.format(html, formHolder, historyHolderSb.toString());
+    	
+		return html.getBytes();
 	}
 
 	private byte[] buildIndex(byte[] bFile) throws IOException {

@@ -1,5 +1,9 @@
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -68,11 +72,16 @@ public class WebCrawler {
 		return result;
 	}
 	
-	public boolean startCrawling(String host) throws CrawlingException {
+	public void startCrawling(String host) throws CrawlingException {
 		
-		//TODO:test the host string
+		try {
+			InetAddress.getByName(host).isReachable(1000);
+		} catch (UnknownHostException e) {
+			throw new CrawlingException("Host is unknown");
+		} catch (IOException e) {
+			throw new CrawlingException("Network error");
+		}
 		
 		setState(State.RUNNING);
-		return true;
 	}
 }
