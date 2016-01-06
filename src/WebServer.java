@@ -13,7 +13,7 @@ public class WebServer {
 
 	private ThreadPool pool;
 	
-	private int maxThreads = 10;
+	private int maxThreads = 1;
 	private int port = 8080;
 	public static String root = "C:/serverroot/";
 	public static String defaultPage = "index.html";

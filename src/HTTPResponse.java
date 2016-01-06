@@ -1,4 +1,7 @@
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.HashMap;
 
@@ -128,26 +131,11 @@ public class HTTPResponse {
 
             if (file.getAbsolutePath().endsWith("params_info.html")) {
                 //If the file is params_info.html we fill the content with the POST data
-                if (request.getPostParamsMap() != null) {
-                    String cbox1Value = request.getPostParamsMap().get("cbox1");
-                    String textarea1Value = request.getPostParamsMap().get("textarea1");
-                    
-                    if (textarea1Value != null) {
-                        textarea1Value = URLDecoder.decode(textarea1Value, "UTF-8");
-                    } else {
-                    	textarea1Value = "";
-                    }
-                    
-                    if (cbox1Value != null) {
-                        cbox1Value = URLDecoder.decode(cbox1Value, "UTF-8");
-                    } else {
-                    	cbox1Value = "";
-                    }
-                    
-                    String html = new String(bFile);
-                    html = String.format(html, textarea1Value, cbox1Value);
-                    bFile = html.getBytes();
-                }
+            	bFile = buildParamsInfo(bFile);
+            } else if (file.getAbsolutePath().endsWith("index.html")) {
+            	bFile = buildIndex(bFile);
+            } else if (file.getAbsolutePath().endsWith("execResult.html")) {
+            	//bFile = buildExecResult();
             }
             if (fis != null) {
                 fis.close();
@@ -159,6 +147,76 @@ public class HTTPResponse {
         }
 
         return bFile;
+    }
+    
+    private byte[] buildExecResult(byte[] bFile) {
+    	
+    	WebCrawler crawler = WebCrawler.getInstance();
+    	String formHolder = "";
+    	StringBuilder historyHolderSb = new StringBuilder();
+    	
+    	switch(crawler.getState()) {
+    	case RUNNING:
+    		formHolder = "Crawler already running...";
+    		break;
+    	default:
+    	case IDLE:
+			try {
+				HashMap<String, String> getParams = request.getGetParamsMap();
+				crawler.startCrawling(getParams.get("txtDomain"));
+    			formHolder = "Started crawler successfully!";
+			} catch (CrawlingException e) {
+				formHolder = new String(readFile(new File("crawler_form.html")));
+				formHolder += String.format("<br>Crawler failed to start because: %s", e.getError());
+			}
+    		break;
+    	}
+    	
+    	for (String link : crawler.getCrawlingHistory()) {
+			historyHolderSb.append(String.format("<a href=\"/%s\">%s</a><br>", link, link.replace("_", "-")));
+		}
+		return bFile;
+	}
+
+	private byte[] buildIndex(byte[] bFile) throws IOException {
+    	
+    	String indexHtml = new String(bFile);
+    	StringBuilder historyHolderSb = new StringBuilder();    	
+		String formHolder = new String(readFile(new File("crawler_form.html")));
+		
+    	WebCrawler crawler = WebCrawler.getInstance();
+		for (String link : crawler.getCrawlingHistory()) {
+			historyHolderSb.append(String.format("<a href=\"/%s\">%s</a><br>", link, link.replace("_", "-")));
+		}
+    	
+    	indexHtml = String.format(indexHtml, formHolder, historyHolderSb.toString());
+    	
+    	return indexHtml.getBytes();
+    }
+    
+    private byte[] buildParamsInfo(byte[] bFile) throws IOException {
+    	if (request.getPostParamsMap() != null) {
+            String cbox1Value = request.getPostParamsMap().get("cbox1");
+            String textarea1Value = request.getPostParamsMap().get("textarea1");
+            
+            if (textarea1Value != null) {
+                textarea1Value = URLDecoder.decode(textarea1Value, "UTF-8");
+            } else {
+            	textarea1Value = "";
+            }
+            
+            if (cbox1Value != null) {
+                cbox1Value = URLDecoder.decode(cbox1Value, "UTF-8");
+            } else {
+            	cbox1Value = "";
+            }
+            
+            String html = new String(bFile);
+            html = String.format(html, textarea1Value, cbox1Value);
+            bFile = html.getBytes();
+        }
+    	
+    	return bFile;
     }
 
     /**
