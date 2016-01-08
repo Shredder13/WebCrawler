@@ -72,7 +72,7 @@ public class WebCrawler {
 		return result;
 	}
 	
-	public void startCrawling(String host) throws CrawlingException {
+	public void startCrawling(String host, boolean portScan, boolean disrespectRobotsTxt) throws CrawlingException {
 		
 		try {
 			InetAddress.getByName(host).isReachable(1000);
@@ -80,6 +80,14 @@ public class WebCrawler {
 			throw new CrawlingException("Host is unknown");
 		} catch (IOException e) {
 			throw new CrawlingException("Network error");
+		}
+		
+		if (portScan) {
+			
+		}
+		
+		if (disrespectRobotsTxt) {
+			
 		}
 		
 		setState(State.RUNNING);

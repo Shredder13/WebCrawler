@@ -135,7 +135,7 @@ public class HTTPResponse {
             } else if (file.getAbsolutePath().endsWith("index.html")) {
             	bFile = buildIndex(bFile);
             } else if (file.getAbsolutePath().endsWith("execResult.html")) {
-            	bFile = buildExecResult(bFile);
+            	bFile = startCrawler(bFile);
             }
             if (fis != null) {
                 fis.close();
@@ -149,7 +149,7 @@ public class HTTPResponse {
         return bFile;
     }
     
-    private byte[] buildExecResult(byte[] bFile) {
+    private byte[] startCrawler(byte[] bFile) {
     	
     	WebCrawler crawler = WebCrawler.getInstance();
     	String html = new String(bFile);
@@ -164,7 +164,10 @@ public class HTTPResponse {
     	case IDLE:
 			try {
 				HashMap<String, String> getParams = request.getGetParamsMap();
-				crawler.startCrawling(getParams.get("txtDomain"));
+				String host = getParams.get("txtDomain");
+				boolean portScan = getParams.get("cbPortScan") != null && getParams.get("cbPortScan").equals("on");
+				boolean disrespectRobotsTxt = getParams.get("cbDisrespectRobots") != null && getParams.get("cbDisrespectRobots").equals("on");
+				crawler.startCrawling(host, portScan, disrespectRobotsTxt);
     			formHolder = "Started crawler successfully!";
 			} catch (CrawlingException e) {
 				formHolder = new String(readFile(new File("crawler_form.html")));
