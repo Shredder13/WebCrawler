@@ -42,19 +42,41 @@ public class PortScanner {
 		Log.d("Port scanner is ready");
 	}
 	
-	public boolean startScanAsync(int start, int end, final IOnPortScanFinished listener) {
+	public ArrayList<Integer> getOpennedPortsSync(int start, int end) throws PortScannerException {
+		
+		final ArrayList<Integer> result = new ArrayList<>();
+		final Object waitForCompletion = new Object();
+		
+		IOnPortScanFinished finishScanningAll = new IOnPortScanFinished() {
+			@Override
+			public void onPortScanFinished(ArrayList<Integer> openedPorts) {
+				result.addAll(openedPorts);
+				waitForCompletion.notifyAll();
+			}
+		};
+		
+		startScanAsync(start, end, finishScanningAll);
+		
+		try {
+			waitForCompletion.wait();
+		} catch (InterruptedException e) {
+			throw new PortScannerException("Unknown error");
+		}
+		
+		return result;
+	}
+	
+	private void startScanAsync(int start, int end, final IOnPortScanFinished listener) throws PortScannerException {
 		
 		if (isShutDown) {
-			Log.d("Port scanner is shutdown. Instansiate a new one.");
-			return false;
+			throw new PortScannerException("Port scanner is shutdown. Instansiate a new one.");
 		}
 		
 		Log.d(String.format("Starting port scan asynchronously from %d to %d.", start, end));
 		
 		//Check if something is wrong with the given port range
 		if (end < 0 || start < 0 || end > 65535 || start > 65535 || end < start) {
-			Log.d(String.format("Illegal port range: end=%d, start=%d.", end, start));
-			return false;
+			throw new PortScannerException(String.format("Illegal port range: end=%d, start=%d.", end, start));
 		}
 		
 		final int numOfPorts = end - start;
@@ -88,7 +110,6 @@ public class PortScanner {
 		}
 		
 		Log.d("Port scan was sent to threadpool.");
-		return true;
 	}
 	
 	/**

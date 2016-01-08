@@ -167,11 +167,11 @@ public class HTTPResponse {
 				String host = getParams.get("txtDomain");
 				boolean portScan = getParams.get("cbPortScan") != null && getParams.get("cbPortScan").equals("on");
 				boolean disrespectRobotsTxt = getParams.get("cbDisrespectRobots") != null && getParams.get("cbDisrespectRobots").equals("on");
-				crawler.startCrawling(host, portScan, disrespectRobotsTxt);
+				crawler.start(host, portScan, disrespectRobotsTxt);
     			formHolder = "Started crawler successfully!";
 			} catch (CrawlingException e) {
 				formHolder = new String(readFile(new File("crawler_form.html")));
-				formHolder += String.format("<br>Crawler failed to start because: %s", e.getError());
+				formHolder += String.format("<br>Crawler failed to start because: %s", e.getMessage());
 			}
     		break;
     	}

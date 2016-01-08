@@ -17,11 +17,6 @@ public class WebServer {
 	private int port = 8080;
 	public static String root = "C:/serverroot/";
 	public static String defaultPage = "index.html";
-	public static int maxDownloaders = 10;
-	public static int maxAnalyzers = 2;
-	public static ArrayList<String> imageExtensions;
-	public static ArrayList<String> videoExtensions;
-	public static ArrayList<String> documentExtensions;
 	
 	public static final int SOCKET_TIMEOUT_MILLIS = 30*1000;
 	public final static String CRLF = "\r\n";
@@ -124,15 +119,15 @@ public class WebServer {
 					} else if(key.equals("maxThreads")) {
 						maxThreads = Integer.valueOf(val);
 					} else if (key.equals("maxDownloaders")) {
-						maxDownloaders = Integer.valueOf(val);
+						WebCrawler.maxDownloaders = Integer.valueOf(val);
 					} else if (key.equals("maxAnalyzers")) {
-						maxAnalyzers = Integer.valueOf(val);
+						WebCrawler.maxAnalyzers = Integer.valueOf(val);
 					} else if (key.equals("imageExtensions")) {
-						imageExtensions = extStringToList(val);
+						WebCrawler.imageExtensions = extStringToList(val);
 					} else if (key.equals("videoExtensions")) {
-						videoExtensions = extStringToList(val);
+						WebCrawler.videoExtensions = extStringToList(val);
 					} else if (key.equals("documentExtensions")) {
-						documentExtensions = extStringToList(val);
+						WebCrawler.documentExtensions = extStringToList(val);
 					}
 				}
 			}

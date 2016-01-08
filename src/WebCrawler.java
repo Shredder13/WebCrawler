@@ -2,7 +2,6 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,10 +13,20 @@ public class WebCrawler {
 	enum State {
 		IDLE, RUNNING
 	}
+	
+	public static int maxDownloaders = 10;
+	public static int maxAnalyzers = 2;
+	public static ArrayList<String> imageExtensions;
+	public static ArrayList<String> videoExtensions;
+	public static ArrayList<String> documentExtensions;
+	
 	private static WebCrawler sInstance;
 	
 	private State state = State.IDLE;
 	private final Object stateLock = new Object();
+	
+	private ThreadPool downloadersPool;
+	private ThreadPool analyzersPool;
 	
 	public static WebCrawler getInstance() {
 		if (sInstance == null) {
@@ -25,6 +34,13 @@ public class WebCrawler {
 		}
 		
 		return sInstance;
+	}
+	
+	public WebCrawler() {
+		downloadersPool = new ThreadPool(maxDownloaders);
+		analyzersPool = new ThreadPool(maxAnalyzers);
+		downloadersPool.start();
+		analyzersPool.start();
 	}
 
 	public State getState() {
@@ -72,7 +88,7 @@ public class WebCrawler {
 		return result;
 	}
 	
-	public void startCrawling(String host, boolean portScan, boolean disrespectRobotsTxt) throws CrawlingException {
+	public void start(String host, boolean portScan, boolean disrespectRobotsTxt) throws CrawlingException {
 		
 		try {
 			InetAddress.getByName(host).isReachable(1000);
@@ -83,12 +99,19 @@ public class WebCrawler {
 		}
 		
 		if (portScan) {
-			
+			try {
+				PortScanner ps = new PortScanner(host);
+				ps.getOpennedPortsSync(1, 1024);
+			} catch (PortScannerException e) {
+				e.printStackTrace();
+			}
 		}
 		
 		if (disrespectRobotsTxt) {
 			
 		}
+		
+		downloadersPool.submit(new DownloaderTask());
 		
 		setState(State.RUNNING);
 	}
