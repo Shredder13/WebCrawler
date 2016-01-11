@@ -6,6 +6,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.concurrent.LinkedBlockingQueue;
 
 
 public class WebCrawler {
@@ -27,6 +28,12 @@ public class WebCrawler {
 	
 	private ThreadPool downloadersPool;
 	private ThreadPool analyzersPool;
+	private LinkedBlockingQueue<String> urlsToDownload;
+	private LinkedBlockingQueue<String> htmlsToAnalyze;
+	
+	private ArrayList<Integer> opennedPorts;
+	
+	private UniqueArrayList<String> visitedUrls;
 	
 	public static WebCrawler getInstance() {
 		if (sInstance == null) {
@@ -39,6 +46,12 @@ public class WebCrawler {
 	public WebCrawler() {
 		downloadersPool = new ThreadPool(maxDownloaders);
 		analyzersPool = new ThreadPool(maxAnalyzers);
+		urlsToDownload = new LinkedBlockingQueue<>();
+		htmlsToAnalyze = new LinkedBlockingQueue<>();
+		
+		visitedUrls = new UniqueArrayList<>();
+		opennedPorts = new ArrayList<>();
+		
 		downloadersPool.start();
 		analyzersPool.start();
 	}
@@ -52,6 +65,10 @@ public class WebCrawler {
 		synchronized(stateLock) {
 			state = s;
 		}
+	}
+	
+	public UniqueArrayList<String> getVisitedUrls() {
+		return visitedUrls;
 	}
 	
 	public ArrayList<String> getCrawlingHistory() {
@@ -101,7 +118,7 @@ public class WebCrawler {
 		if (portScan) {
 			try {
 				PortScanner ps = new PortScanner(host);
-				ps.getOpennedPortsSync(1, 1024);
+				opennedPorts = ps.getOpennedPortsSync(1, 1024);
 			} catch (PortScannerException e) {
 				e.printStackTrace();
 			}

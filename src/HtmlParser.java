@@ -1,6 +1,3 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.regex.Matcher;
@@ -36,7 +33,7 @@ public class HtmlParser {
 		absServerPath = parseUrl(url);
 	}
 	
-	private void parse() {
+	public void parse() {
 		String regex = buildRegex();
 		
 		Pattern p = Pattern.compile(regex);
@@ -57,6 +54,10 @@ public class HtmlParser {
 					addResourceToList(resourcePath, docs);
 				} 
 			} else if (hrefLink != null) {
+				int sulamitStart = hrefLink.indexOf('#');
+				if (sulamitStart != -1) {
+					hrefLink = hrefLink.substring(0, sulamitStart);
+				}
 				addResourceToList(hrefLink, links);
 			}
 		}
@@ -77,7 +78,10 @@ public class HtmlParser {
 	
 	private void addResourceToList(String resPath, ArrayList<String> resList) {
 		resPath = makeAbsolutePath(resPath);
-		resList.add(resPath);
+		
+		if (!resList.contains(resPath)) {
+			resList.add(resPath);
+		}
 	}
 	
 	/**
@@ -144,6 +148,19 @@ public class HtmlParser {
 		return result;
 	}
 	
+	public ArrayList<String> getImagesUrls() {
+		return images;
+	}
+	public ArrayList<String> getVideosUrls() {
+		return videos;
+	}
+	public ArrayList<String> getDocsUrls() {
+		return docs;
+	}
+	public ArrayList<String> getHrefUrls() {
+		return links;
+	}
+	
 	//TODO: Remove when submitting
 	/*public static void main(String[] args) {
 		HashMap<String, ArrayList<String>> exts = new HashMap<>();
@@ -187,7 +204,6 @@ public class HtmlParser {
 			}
 			reader.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		

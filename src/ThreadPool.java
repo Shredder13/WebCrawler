@@ -61,6 +61,8 @@ public class ThreadPool {
 			worker.interruptSilently();
 		}
 		
+		workers.clear();
+		
 		Log.d("Thread pool is shutdown");
 	}
 	

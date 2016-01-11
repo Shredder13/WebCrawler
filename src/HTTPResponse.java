@@ -331,6 +331,7 @@ public class HTTPResponse {
         setHttpVersion();
         setPathAndType();
         addConnectionHedaer();
+        //TODO: add HOST header for HTTP/1.1
 
         HTTP_METHOD reqMethod = request.getHttpMethod();
 	    if (reqMethod != null && reqMethod.equals(HTTP_METHOD.TRACE)) {
