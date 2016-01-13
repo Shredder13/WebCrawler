@@ -17,7 +17,7 @@ public class HTTPRequestParseUtil {
 	 * @throws HTTPReqErr Raised when the method or HTTP version are not supported, or the path is not found,
 	 * or it's just a bad request.
 	 */
-	public static void parseRequestLine(HTTPRequest request, String line) throws HTTPReqErr {
+	public static void parseRequestLine(WebServerHttpRequest request, String line) throws HTTPReqErr {
 		
 		if (line == null) {
 			throw new HTTPReqErr(HTTP_CODE.ERR_400_BAD_REQUEST);
@@ -52,7 +52,7 @@ public class HTTPRequestParseUtil {
 	 * @param request The request holding the headers map
 	 * @param line The header as read from the stream
 	 */
-	public static void parseHeaderLine(HTTPRequest request, String line) {
+	public static void parseHeaderLine(WebServerHttpRequest request, String line) {
 		
 		//group0 is the key, group1 is the value
 		String regex = "^([^ ]+): ?(.+)\\r\\n$";
@@ -68,7 +68,7 @@ public class HTTPRequestParseUtil {
 	 * @param request
 	 * @throws HTTPReqErr With code 400_BAD_ERROR if the httpversion is not 1.0 or 1.1
 	 */
-	public static void validateHTTPVersion(HTTPRequest request) throws HTTPReqErr {
+	public static void validateHTTPVersion(WebServerHttpRequest request) throws HTTPReqErr {
 		HTTP_VERSION version = request.getHttpVersion();
 		if (version == null) {
 			throw new HTTPReqErr(HTTP_CODE.ERR_400_BAD_REQUEST);
@@ -84,7 +84,7 @@ public class HTTPRequestParseUtil {
 	 * @param request
 	 * @throws HTTPReqErr With code 404_NOT_FOUND if the resource requested is not found
 	 */
-	public static void validateHTTPPath(HTTPRequest request) throws HTTPReqErr {
+	public static void validateHTTPPath(WebServerHttpRequest request) throws HTTPReqErr {
 		
 		String path = request.getPath();
 		String root = WebServer.root;
@@ -112,7 +112,7 @@ public class HTTPRequestParseUtil {
 	 * @param request
 	 * @throws HTTPReqErr With code 501_NOT_IMPLEMENTED if the method is not implemented
 	 */
-	public static void validateHTTPMethod(HTTPRequest request) throws HTTPReqErr {
+	public static void validateHTTPMethod(WebServerHttpRequest request) throws HTTPReqErr {
 		HTTP_METHOD method = request.getHttpMethod();
 		if (method == null) {
 			throw new HTTPReqErr(HTTP_CODE.ERR_501_NOT_IMPLEMENTED);

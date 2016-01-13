@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.HashMap;
 
-public class HTTPResponse {
+public class WebServerHttpResponse {
 
     protected HTTP_CODE code;
     protected HTTP_VERSION httpVersion;
@@ -16,9 +16,9 @@ public class HTTPResponse {
     protected boolean isChunked;
     private final int CHUNK_SIZE = 1024;
 
-    HTTPRequest request;
+    WebServerHttpRequest request;
 
-    public HTTPResponse(HTTP_CODE code) {
+    public WebServerHttpResponse(HTTP_CODE code) {
         this.code = code;
         headers = new HashMap<>();
     }
@@ -324,7 +324,7 @@ public class HTTPResponse {
      * @param request The user's request
      * @return HTTPResponse according to the request given
      */
-    public byte[] buildResponse(HTTPRequest request) {
+    public byte[] buildResponse(WebServerHttpRequest request) {
         this.request = request;
         
         validateHTTPCode();

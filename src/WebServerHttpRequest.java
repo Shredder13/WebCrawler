@@ -1,6 +1,6 @@
 import java.util.HashMap;
 
-public class HTTPRequest {
+public class WebServerHttpRequest {
 
 	private String root;
 	private String defaultPage;
@@ -14,7 +14,7 @@ public class HTTPRequest {
 
 	private String rawRequestData;
 
-	public HTTPRequest() {
+	public WebServerHttpRequest() {
 		headers = new HashMap<>();
 		getParams = new HashMap<>();
 		postParams = new HashMap<>();
@@ -22,7 +22,7 @@ public class HTTPRequest {
 		this.defaultPage = WebServer.defaultPage;
 	}
 
-	public HTTPRequest setHttpVersion(String version) throws HTTPReqErr {
+	public WebServerHttpRequest setHttpVersion(String version) throws HTTPReqErr {
 
 		if (version == null) {
 			return this;
@@ -37,7 +37,7 @@ public class HTTPRequest {
 		return this;
 	}
 	
-	public HTTPRequest setPath(String path) throws HTTPReqErr {
+	public WebServerHttpRequest setPath(String path) throws HTTPReqErr {
 		
 		if (path == null || path != null && path.length() == 0) {
 			//If somehow the path is null or empty, it's a bad request
@@ -59,7 +59,7 @@ public class HTTPRequest {
 		return this;
 	}
 
-	public HTTPRequest setHttpMethod(String method) throws HTTPReqErr {
+	public WebServerHttpRequest setHttpMethod(String method) throws HTTPReqErr {
 
 		if (method.length() == 0) {
 			throw new HTTPReqErr(HTTP_CODE.ERR_400_BAD_REQUEST);
@@ -79,7 +79,7 @@ public class HTTPRequest {
 		return this;
 	}
 
-	public HTTPRequest addHeader(String headerKey, String headerValue) {
+	public WebServerHttpRequest addHeader(String headerKey, String headerValue) {
 
 		if (headerKey.toLowerCase().equals("content-length")) {
 			try {
@@ -97,7 +97,7 @@ public class HTTPRequest {
 		return this;
 	}
 
-	public HTTPRequest setRequestBody(String requestBody) {
+	public WebServerHttpRequest setRequestBody(String requestBody) {
 		
 		this.requestBody = requestBody;
 		
@@ -108,7 +108,7 @@ public class HTTPRequest {
 		return this;
 	}
 	
-	public HTTPRequest setParams(HashMap<String, String> paramsMap, String params) {
+	public WebServerHttpRequest setParams(HashMap<String, String> paramsMap, String params) {
 		String[] pairs = params.split("&");
 		for (String pair : pairs) {
 			int endOfKey = pair.indexOf('=');

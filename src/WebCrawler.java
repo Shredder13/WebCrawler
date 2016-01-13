@@ -35,6 +35,8 @@ public class WebCrawler {
 	
 	private UniqueArrayList<String> visitedUrls;
 	
+	private CrawlData crawlData;
+	
 	public static WebCrawler getInstance() {
 		if (sInstance == null) {
 			sInstance = new WebCrawler();
@@ -52,6 +54,8 @@ public class WebCrawler {
 		visitedUrls = new UniqueArrayList<>();
 		opennedPorts = new ArrayList<>();
 		
+		crawlData = new CrawlData();
+		
 		downloadersPool.start();
 		analyzersPool.start();
 	}
@@ -65,6 +69,10 @@ public class WebCrawler {
 		synchronized(stateLock) {
 			state = s;
 		}
+	}
+	
+	public CrawlData getCrawlData() {
+		return crawlData;
 	}
 	
 	public UniqueArrayList<String> getVisitedUrls() {

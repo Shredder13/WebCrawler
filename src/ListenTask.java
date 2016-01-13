@@ -14,7 +14,7 @@ import java.util.HashMap;
 public class ListenTask extends Task {
 
 	private Socket mSocket;
-	private HTTPRequest mHttpReq;
+	private WebServerHttpRequest mHttpReq;
 	
 	//When true, the connection will never be closed because of the server,
 	//and after successful request-response cycle we will 'reset' the listen task,
@@ -23,7 +23,7 @@ public class ListenTask extends Task {
 
 	public ListenTask(Socket socket) {
 		mSocket = socket;
-		mHttpReq = new HTTPRequest();
+		mHttpReq = new WebServerHttpRequest();
 	}
 
 	/**
@@ -86,7 +86,7 @@ public class ListenTask extends Task {
 					
 					if (!socketError) {
 						//Sending the response back
-						HTTPResponse response = new HTTPResponse(httpCode);
+						WebServerHttpResponse response = new WebServerHttpResponse(httpCode);
 						DataOutputStream clientOutputWriter = new DataOutputStream(mSocket.getOutputStream());
 						clientOutputWriter.write(response.buildResponse(mHttpReq));
 						clientOutputWriter.flush();
@@ -94,7 +94,7 @@ public class ListenTask extends Task {
 					
 					// persistent-connection support
 					if (checkKeepAlive() && !socketError) {
-						mHttpReq = new HTTPRequest();
+						mHttpReq = new WebServerHttpRequest();
 					} else {
 						mSocket.close();
 						keepAlive = false;

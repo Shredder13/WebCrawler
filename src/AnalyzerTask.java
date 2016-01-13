@@ -29,24 +29,21 @@ public class AnalyzerTask extends Task {
 		HtmlParser parser = new HtmlParser(currUrl, currHtml, exts);
 		parser.parse();
 		
-		ArrayList<String> objectUrls = new ArrayList<>();
-		objectUrls.addAll(parser.getImagesUrls());
-		objectUrls.addAll(parser.getVideosUrls());
-		objectUrls.addAll(parser.getDocsUrls());
-		
+		ArrayList<String> imgUrls = parser.getImagesUrls();
+		ArrayList<String> videoUrls = parser.getVideosUrls();
+		ArrayList<String> docUrls = parser.getDocsUrls();
 		ArrayList<String> hrefUrls = parser.getHrefUrls();
 
-		//Add to URLs queue only if not visited
-		for (String url : objectUrls) {
+		sendToDownload(imgUrls, DownloaderTask.RESOURCE_TYPE_IMG);
+		sendToDownload(videoUrls, DownloaderTask.RESOURCE_TYPE_VIDEO);
+		sendToDownload(docUrls, DownloaderTask.RESOURCE_TYPE_DOC);
+		sendToDownload(hrefUrls, DownloaderTask.RESOURCE_TYPE_HREF);
+	}
+	
+	private void sendToDownload(ArrayList<String> urls, int resourceType) {
+		for (String url : urls) {
 			if (!webCrawler.getVisitedUrls().contains(url)) {
-				downloadersPool.submit(new DownloaderTask(url, DownloaderTask.DOWNLOADER_TYPE_HEAD, downloadersPool, analyzersPool));
-				//TODO: Someone should listen for callbacks.
-			}
-		}
-		
-		for (String url : hrefUrls) {
-			if (!webCrawler.getVisitedUrls().contains(url)) {
-				downloadersPool.submit(new DownloaderTask(url, DownloaderTask.DOWNLOADER_TYPE_GET, downloadersPool, analyzersPool));
+				downloadersPool.submit(new DownloaderTask(url, resourceType, downloadersPool, analyzersPool));
 				//TODO: Someone should listen for callbacks.
 			}
 		}
