@@ -28,8 +28,6 @@ public class WebCrawler {
 	
 	private ThreadPool downloadersPool;
 	private ThreadPool analyzersPool;
-	private LinkedBlockingQueue<String> urlsToDownload;
-	private LinkedBlockingQueue<String> htmlsToAnalyze;
 	
 	private ArrayList<Integer> opennedPorts;
 	
@@ -48,8 +46,6 @@ public class WebCrawler {
 	public WebCrawler() {
 		downloadersPool = new ThreadPool(maxDownloaders);
 		analyzersPool = new ThreadPool(maxAnalyzers);
-		urlsToDownload = new LinkedBlockingQueue<>();
-		htmlsToAnalyze = new LinkedBlockingQueue<>();
 		
 		visitedUrls = new UniqueArrayList<>();
 		opennedPorts = new ArrayList<>();
@@ -133,11 +129,16 @@ public class WebCrawler {
 		}
 		
 		if (disrespectRobotsTxt) {
-			
+			//TODO: ignore in the downloader
 		}
 		
+		//TODO: start a downloader task for the host.
 		downloadersPool.submit(new DownloaderTask());
 		
 		setState(State.RUNNING);
+		
+		//TODO: find a way to terminate the program.
+		//We need to determine when the analyzers & downloaders are empty.
+		//This should be done with callbacks or whatever. 
 	}
 }

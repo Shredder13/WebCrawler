@@ -44,7 +44,6 @@ public class AnalyzerTask extends Task {
 		for (String url : urls) {
 			if (!webCrawler.getVisitedUrls().contains(url)) {
 				downloadersPool.submit(new DownloaderTask(url, resourceType, downloadersPool, analyzersPool));
-				//TODO: Someone should listen for callbacks.
 			}
 		}
 	}

@@ -25,24 +25,22 @@ public class DownloaderTask extends Task {
 
 	@Override
 	public void run() {
-		try {
-			switch(downloaderType) {
-			case RESOURCE_TYPE_IMG:
-			case RESOURCE_TYPE_VIDEO:
-			case RESOURCE_TYPE_DOC:
-				WebServerHttpRequest req = new WebServerHttpRequest();
-				req.setHttpMethod(HTTP_METHOD.HEAD.toString())
-					.setHttpVersion(HTTP_VERSION.HTTP_1_0.toString())
-					.setPath(url);
-				break;
-			
-			default:
-			case RESOURCE_TYPE_HREF:
-				break;
-			}
-		} catch (HTTPReqErr e) {
-			
+		switch(downloaderType) {
+		case RESOURCE_TYPE_IMG:
+		case RESOURCE_TYPE_VIDEO:
+		case RESOURCE_TYPE_DOC:
+			//TODO: Just send HEAD request
+			break;
+		
+		default:
+		case RESOURCE_TYPE_HREF:
+			//TODO: Download the HTML (send HTTP request).
+			//TODO: start an analyzer
+			break;
 		}
+		
+		//TODO: Whatever was downloaded, it should update the CrawlData:
+		//webCrawler.getCrawlData().put(key, value);
 	}
 
 	@Override

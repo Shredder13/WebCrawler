@@ -98,6 +98,7 @@ public class WebServer {
 	 * @throws IOException Is thrown if there's problem reading the config file.
 	 */
 	private void parseConfigFile(String path) throws NumberFormatException, IOException {
+		//TODO: check what to do with LAB1 configurations - should we keep them?
 		BufferedReader reader = null;
 		
 		try {
