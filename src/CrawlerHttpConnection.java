@@ -53,7 +53,7 @@ public class CrawlerHttpConnection {
 	}
 	
 	@Nullable
-	public Response connect() throws UnknownHostException, IOException {
+	public Response getResponse() throws UnknownHostException, IOException {
 		
 		extractConnectionDetails(urlStr);
 		Log.d("connecting...");
@@ -157,7 +157,7 @@ public class CrawlerHttpConnection {
 	public static void main(String[] args) {
 		CrawlerHttpConnection req = new CrawlerHttpConnection(HTTP_METHOD.HEAD, "http://localhost:8080/", HTTP_VERSION.HTTP_1_0);
 		try {
-			req.connect();
+			req.getResponse();
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -185,6 +185,16 @@ public class CrawlerHttpConnection {
 		}
 		public String getBody() {
 			return body;
+		}
+	}
+
+	public void close() {
+		if (socket != null) {
+			try {
+				socket.close();
+			} catch (IOException e) {
+				Log.d("CrawlerHttpConnection: error closing socket");
+			}
 		}
 	}
 }
