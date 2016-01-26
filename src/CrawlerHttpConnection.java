@@ -154,17 +154,6 @@ public class CrawlerHttpConnection {
 		return hasContentLength && hasContentType;
 	}
 	
-	public static void main(String[] args) {
-		CrawlerHttpConnection req = new CrawlerHttpConnection(HTTP_METHOD.HEAD, "http://localhost:8080/", HTTP_VERSION.HTTP_1_0);
-		try {
-			req.getResponse();
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
 	public class Response {
 		private HTTP_VERSION version;
 		private HTTP_CODE code;
@@ -197,4 +186,15 @@ public class CrawlerHttpConnection {
 			}
 		}
 	}
+	
+	/*public static void main(String[] args) {
+		CrawlerHttpConnection req = new CrawlerHttpConnection(HTTP_METHOD.HEAD, "http://localhost:8080/", HTTP_VERSION.HTTP_1_0);
+		try {
+			req.getResponse();
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}*/
 }

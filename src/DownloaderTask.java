@@ -1,4 +1,6 @@
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.UnknownHostException;
 
 public class DownloaderTask extends Task {
@@ -27,9 +29,29 @@ public class DownloaderTask extends Task {
 	@Override
 	public void run() {
 		
-		//TODO: if visited, do not download
+		//check if external or internal link
+		boolean internal = false;
+		try {
+			URL urlObj = new URL(url);
+			URL origUrlObj = new URL(webCrawler.getHost());
+			internal = urlObj.getHost().equals(origUrlObj.getHost());
+		} catch (MalformedURLException e1) {
+			//Broken link
+			e1.printStackTrace();
+			return;
+		}
 		
-		//TODO: check if external or internal link
+		//if visited, do not download. This is a HashSet --> contains is O(1).
+		if (webCrawler.getVisitedUrls().contains(url)) {
+			return;
+		} else {
+			webCrawler.getVisitedUrls().add(url);
+		}
+		
+		//TODO: DO NOT ANALYSE EXTERNAL(!!!)
+		//YOU DON'T WANT TO DOWNLOAD ALL THE INTERNET
+		
+		//TODO: robots.txt handling
 		
 		try {
 			
@@ -45,7 +67,7 @@ public class DownloaderTask extends Task {
 				response = conn.getResponse();
 				conn.close();
 				
-				//TODO: update BLOB craw data.
+				//TODO: update BLOB crawl data.
 				//webCrawler.getCrawlData().put(key, value);
 				break;
 			default:
@@ -54,7 +76,9 @@ public class DownloaderTask extends Task {
 				response = conn.getResponse();
 				conn.close();
 				
-				analyzersPool.submit(new AnalyzerTask(url, response.getBody(), downloadersPool, analyzersPool));
+				if (internal) {
+					analyzersPool.submit(new AnalyzerTask(url, response.getBody(), downloadersPool, analyzersPool));
+				}
 				
 				//TODO: update HTML crawl data.
 				//webCrawler.getCrawlData().put(key, value);

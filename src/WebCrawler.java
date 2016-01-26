@@ -6,6 +6,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingQueue;
 
 
@@ -31,9 +32,12 @@ public class WebCrawler {
 	
 	private ArrayList<Integer> opennedPorts;
 	
-	private UniqueArrayList<String> visitedUrls;
+	//private UniqueArrayList<String> visitedUrls;
+	private HashSet<String> visitedUrls;
 	
 	private CrawlData crawlData;
+	
+	private String host;
 	
 	public static WebCrawler getInstance() {
 		if (sInstance == null) {
@@ -47,13 +51,17 @@ public class WebCrawler {
 		downloadersPool = new ThreadPool(maxDownloaders);
 		analyzersPool = new ThreadPool(maxAnalyzers);
 		
-		visitedUrls = new UniqueArrayList<>();
+		visitedUrls = new HashSet<>();
 		opennedPorts = new ArrayList<>();
 		
 		crawlData = new CrawlData();
 		
 		downloadersPool.start();
 		analyzersPool.start();
+	}
+	
+	public String getHost() {
+		return host;
 	}
 
 	public State getState() {
@@ -71,7 +79,7 @@ public class WebCrawler {
 		return crawlData;
 	}
 	
-	public UniqueArrayList<String> getVisitedUrls() {
+	public HashSet<String> getVisitedUrls() {
 		return visitedUrls;
 	}
 	
@@ -109,10 +117,11 @@ public class WebCrawler {
 		return result;
 	}
 	
-	public void start(String host, boolean portScan, boolean disrespectRobotsTxt) throws CrawlingException {
+	public void start(String aHost, boolean portScan, boolean disrespectRobotsTxt) throws CrawlingException {
 		
 		try {
-			InetAddress.getByName(host).isReachable(1000);
+			InetAddress.getByName(aHost).isReachable(1000);
+			host = aHost;
 		} catch (UnknownHostException e) {
 			throw new CrawlingException("Host is unknown");
 		} catch (IOException e) {
@@ -121,7 +130,7 @@ public class WebCrawler {
 		
 		if (portScan) {
 			try {
-				PortScanner ps = new PortScanner(host);
+				PortScanner ps = new PortScanner(aHost);
 				opennedPorts = ps.getOpennedPortsSync(1, 1024);
 			} catch (PortScannerException e) {
 				e.printStackTrace();
