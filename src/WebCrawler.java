@@ -2,12 +2,12 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.concurrent.LinkedBlockingQueue;
 
 
 public class WebCrawler {
@@ -18,9 +18,9 @@ public class WebCrawler {
 	
 	public static int maxDownloaders = 10;
 	public static int maxAnalyzers = 2;
-	public static ArrayList<String> imageExtensions;
-	public static ArrayList<String> videoExtensions;
-	public static ArrayList<String> documentExtensions;
+	public static ArrayList<String> imageExtensions = new ArrayList<>();
+	public static ArrayList<String> videoExtensions = new ArrayList<>();
+	public static ArrayList<String> documentExtensions = new ArrayList<>();
 	
 	private static WebCrawler sInstance;
 	
@@ -37,7 +37,7 @@ public class WebCrawler {
 	
 	private CrawlData crawlData;
 	
-	private String host;
+	private String hostUrl;
 	
 	public static WebCrawler getInstance() {
 		if (sInstance == null) {
@@ -47,7 +47,7 @@ public class WebCrawler {
 		return sInstance;
 	}
 	
-	public WebCrawler() {
+	private WebCrawler() {
 		downloadersPool = new ThreadPool(maxDownloaders);
 		analyzersPool = new ThreadPool(maxAnalyzers);
 		
@@ -61,7 +61,7 @@ public class WebCrawler {
 	}
 	
 	public String getHost() {
-		return host;
+		return hostUrl;
 	}
 
 	public State getState() {
@@ -71,6 +71,7 @@ public class WebCrawler {
 	}
 	private void setState(State s) {
 		synchronized(stateLock) {
+			Log.d("Crawler state is " + s.toString());
 			state = s;
 		}
 	}
@@ -117,11 +118,26 @@ public class WebCrawler {
 		return result;
 	}
 	
+	private String getFixedHostUrl(String host) {
+		StringBuilder result = new StringBuilder(host.replace("\\", "/"));
+		if (!(host.startsWith("http://") || host.startsWith("https://"))) {
+			result.insert(0, "http://");
+		}
+		if (!host.endsWith("/")) {
+			result.append("/");
+		}
+		return result.toString();
+	}
+	
 	public void start(String aHost, boolean portScan, boolean disrespectRobotsTxt) throws CrawlingException {
-		
+		Log.d(String.format("WebCrawler.start -> host = %s", aHost));
+		String fixedHost = getFixedHostUrl(aHost);
+		Log.d(String.format("WebCrawler.start -> fixed host = %s", fixedHost));
 		try {
-			InetAddress.getByName(aHost).isReachable(1000);
-			host = aHost;
+			URL hostUrlObj = new URL(fixedHost);
+			
+			InetAddress.getByName(hostUrlObj.getHost()).isReachable(1000);
+			hostUrl = fixedHost;
 		} catch (UnknownHostException e) {
 			throw new CrawlingException("Host is unknown");
 		} catch (IOException e) {
@@ -130,7 +146,7 @@ public class WebCrawler {
 		
 		if (portScan) {
 			try {
-				PortScanner ps = new PortScanner(aHost);
+				PortScanner ps = new PortScanner(fixedHost);
 				opennedPorts = ps.getOpennedPortsSync(1, 1024);
 			} catch (PortScannerException e) {
 				e.printStackTrace();
@@ -139,15 +155,29 @@ public class WebCrawler {
 		
 		if (disrespectRobotsTxt) {
 			//TODO: ignore in the downloader
+			crawlData.put(CrawlData.RESPECT_ROBOTS_TXT, true);
 		}
 		
-		//TODO: start a downloader task for the host.
-		downloadersPool.submit(new DownloaderTask());
+		//start a downloader task for the host.
+		Log.d("Starting main downloader");
+		downloadersPool.submit(new DownloaderTask(fixedHost, DownloaderTask.RESOURCE_TYPE_HREF, downloadersPool, analyzersPool));
 		
-		setState(State.RUNNING);
-		
-		//TODO: find a way to terminate the program.
-		//We need to determine when the analyzers & downloaders are empty.
-		//This should be done with callbacks or whatever. 
+		setState(State.RUNNING); 
 	}
+	
+	public void checkIfFinished() {
+		if (AnalyzerTask.getNumOfAnalyzersAlive() == 0 && DownloaderTask.getNumOfDownloadersAlive() == 0) {
+			setState(State.IDLE);
+			Log.d("Finished crawling!");
+		}
+	}
+	
+	/*public static void main(String[] args) {
+		WebCrawler crawler = WebCrawler.getInstance();
+		try {
+			crawler.start("127.0.0.1:8080/", false, false);
+		} catch (CrawlingException e) {
+			e.printStackTrace();
+		}
+	}*/
 }

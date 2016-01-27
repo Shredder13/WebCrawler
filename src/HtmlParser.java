@@ -39,40 +39,44 @@ public class HtmlParser {
 		Pattern p = Pattern.compile(regex);
 		Matcher m = p.matcher(html);
 		while(m.find()) {
-			String resourcePath = m.group(1);
-			String imgExt = m.group(3);
-			String videoExt = m.group(4);
-			String docExt = m.group(5);
-			String hrefLink = m.group(7);
-			
-			if (resourcePath != null) {
-				if (imgExt != null) {
-					addResourceToList(resourcePath, images);
-				} else if (videoExt != null) {
-					addResourceToList(resourcePath, videos);
-				} else if (docExt != null) {
-					addResourceToList(resourcePath, docs);
-				} 
-			} else if (hrefLink != null) {
-				int sulamitStart = hrefLink.indexOf('#');
-				if (sulamitStart != -1) {
-					hrefLink = hrefLink.substring(0, sulamitStart);
+			try {
+				String resourcePath = m.group(1);
+				String imgExt = m.group(3);
+				String videoExt = m.group(4);
+				String docExt = m.group(5);
+				String hrefLink = m.group(7);
+				
+				if (resourcePath != null) {
+					if (imgExt != null) {
+						addResourceToList(resourcePath, images);
+					} else if (videoExt != null) {
+						addResourceToList(resourcePath, videos);
+					} else if (docExt != null) {
+						addResourceToList(resourcePath, docs);
+					} 
+				} else if (hrefLink != null) {
+					int sulamitStart = hrefLink.indexOf('#');
+					if (sulamitStart != -1) {
+						hrefLink = hrefLink.substring(0, sulamitStart);
+					}
+					addResourceToList(hrefLink, links);
 				}
-				addResourceToList(hrefLink, links);
+			} catch (IllegalArgumentException e) {
+				System.out.println("wtf");
 			}
 		}
 		
 		for (String s : images) {
-			Log.d(s);
+			Log.d(String.format("HtmlParse found image %s", s));
 		}
 		for (String s : videos) {
-			Log.d(s);
+			Log.d(String.format("HtmlParse found video %s", s));
 		}
 		for (String s : docs) {
-			Log.d(s);
+			Log.d(String.format("HtmlParse found document %s", s));
 		}
 		for (String s : links) {
-			Log.d(s);
+			Log.d(String.format("HtmlParse found HREF %s", s));
 		}
 	}
 	

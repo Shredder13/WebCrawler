@@ -111,7 +111,7 @@ public class CrawlerHttpConnection {
 	}
 
 	private boolean validateResponseLine(String resLine) {
-		Pattern p = Pattern.compile("^(HTTP\\/1\\.1|HTTP\\/1\\.0) ([0-9]+ \\w+)\\r\\n$");
+		Pattern p = Pattern.compile("^(HTTP\\/1\\.1|HTTP\\/1\\.0) ([0-9]+ \\w+)$");
 		Matcher m = p.matcher(resLine);
 		if (m.matches()) {
 			String httpVersion = m.group(1);

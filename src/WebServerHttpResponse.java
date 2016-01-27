@@ -2,7 +2,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.HashMap;
 
 public class WebServerHttpResponse {
@@ -164,12 +166,12 @@ public class WebServerHttpResponse {
     	case IDLE:
 			try {
 				HashMap<String, String> getParams = request.getGetParamsMap();
-				String host = getParams.get("txtDomain");
+				String host = URLDecoder.decode(getParams.get("txtDomain"),"utf-8");
 				boolean portScan = getParams.get("cbPortScan") != null && getParams.get("cbPortScan").equals("on");
 				boolean disrespectRobotsTxt = getParams.get("cbDisrespectRobots") != null && getParams.get("cbDisrespectRobots").equals("on");
 				crawler.start(host, portScan, disrespectRobotsTxt);
     			formHolder = "Started crawler successfully!";
-			} catch (CrawlingException e) {
+			} catch (CrawlingException | UnsupportedEncodingException e) {
 				formHolder = new String(readFile(new File("crawler_form.html")));
 				formHolder += String.format("<br>Crawler failed to start because: %s", e.getMessage());
 			}
@@ -177,7 +179,7 @@ public class WebServerHttpResponse {
     	}
     	
     	for (String link : crawler.getCrawlingHistory()) {
-			historyHolderSb.append(String.format("<a href=\"/%s\">%s</a><br>", link, link.replace("_", "-")));
+			historyHolderSb.append(String.format("<a href=\"%s\">%s</a><br>", link, link.replace("_", "-")));
 		}
     	
     	html = String.format(html, formHolder, historyHolderSb.toString());
@@ -193,7 +195,7 @@ public class WebServerHttpResponse {
 		
     	WebCrawler crawler = WebCrawler.getInstance();
 		for (String link : crawler.getCrawlingHistory()) {
-			historyHolderSb.append(String.format("<a href=\"/%s\">%s</a><br>", link, link.replace("_", "-")));
+			historyHolderSb.append(String.format("<a href=\"%s\">%s</a><br>", link, link.replace("_", "-")));
 		}
     	
     	indexHtml = String.format(indexHtml, formHolder, historyHolderSb.toString());

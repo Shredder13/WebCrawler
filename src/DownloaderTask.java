@@ -13,52 +13,51 @@ public class DownloaderTask extends Task {
 	ThreadPool downloadersPool;
 	ThreadPool analyzersPool;
 	
-	private int downloaderType;
+	private int resourceType;
 	private String url;
 	
 	WebCrawler webCrawler;
 	
-	public DownloaderTask(String url, int downloaderType, ThreadPool downloadersPool, ThreadPool analyzersPool) {
+	private static int numDownloadersAlive = 0;
+	private static final Object numDownloadersAliveLock = new Object();
+	
+	public DownloaderTask(String url, int resourceType, ThreadPool downloadersPool, ThreadPool analyzersPool) {
 		this.downloadersPool = downloadersPool;
 		this.analyzersPool = analyzersPool;
-		this.downloaderType = downloaderType;
+		this.resourceType = resourceType;
 		this.url = url;
 		webCrawler = WebCrawler.getInstance();
+		
+		increaseNumOfAnalyzersAlive();
 	}
 
 	@Override
 	public void run() {
 		
-		//check if external or internal link
-		boolean internal = false;
+		Log.d(String.format("Running downloader task --> url = %s", url));
 		try {
+			
+			//check if external or internal link
+			boolean internal = false;
+			
 			URL urlObj = new URL(url);
 			URL origUrlObj = new URL(webCrawler.getHost());
 			internal = urlObj.getHost().equals(origUrlObj.getHost());
-		} catch (MalformedURLException e1) {
-			//Broken link
-			e1.printStackTrace();
-			return;
-		}
-		
-		//if visited, do not download. This is a HashSet --> contains is O(1).
-		if (webCrawler.getVisitedUrls().contains(url)) {
-			return;
-		} else {
-			webCrawler.getVisitedUrls().add(url);
-		}
-		
-		//TODO: DO NOT ANALYSE EXTERNAL(!!!)
-		//YOU DON'T WANT TO DOWNLOAD ALL THE INTERNET
-		
-		//TODO: robots.txt handling
-		
-		try {
+			
+			//if visited, do not download. This is a HashSet --> contains is O(1).
+			if (webCrawler.getVisitedUrls().contains(url)) {
+				return;
+			} else {
+				Log.d(String.format("Url not yet visited! processing further : url = %s", url));
+				webCrawler.getVisitedUrls().add(url);
+			}
+			
+			//TODO: robots.txt handling
 			
 			CrawlerHttpConnection conn;
 			CrawlerHttpConnection.Response response;
 			
-			switch(downloaderType) {
+			switch(resourceType) {
 			case RESOURCE_TYPE_IMG:
 			case RESOURCE_TYPE_VIDEO:
 			case RESOURCE_TYPE_DOC:
@@ -66,6 +65,8 @@ public class DownloaderTask extends Task {
 				conn = new CrawlerHttpConnection(HTTP_METHOD.HEAD, url, HTTP_VERSION.HTTP_1_0);
 				response = conn.getResponse();
 				conn.close();
+				
+				Log.d(String.format("Resource is a BLOB : url = %s", url));
 				
 				//TODO: update BLOB crawl data.
 				//webCrawler.getCrawlData().put(key, value);
@@ -76,7 +77,10 @@ public class DownloaderTask extends Task {
 				response = conn.getResponse();
 				conn.close();
 				
+				Log.d(String.format("Resource is a HTML : url = %s", url));
+				
 				if (internal) {
+					Log.d(String.format("HTML is internal! send to analyzer : url = %s", url));
 					analyzersPool.submit(new AnalyzerTask(url, response.getBody(), downloadersPool, analyzersPool));
 				}
 				
@@ -84,11 +88,15 @@ public class DownloaderTask extends Task {
 				//webCrawler.getCrawlData().put(key, value);
 				break;
 			}
-			
+		} catch (MalformedURLException e) {
+			//Broken link
+			e.printStackTrace();
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
+		} finally {
+			decreaseNumOfAnalyzersAlive();
 		}
 	}
 
@@ -98,4 +106,20 @@ public class DownloaderTask extends Task {
 
 	}
 
+	private void increaseNumOfAnalyzersAlive() {
+		synchronized (numDownloadersAliveLock) {
+			numDownloadersAlive++;
+		}
+	}
+	private void decreaseNumOfAnalyzersAlive() {
+		synchronized (numDownloadersAliveLock) {
+			numDownloadersAlive--;
+			webCrawler.checkIfFinished();
+		}
+	}
+	public static int getNumOfDownloadersAlive() {
+		synchronized (numDownloadersAliveLock) {
+			return numDownloadersAlive;
+		}
+	}
 }
