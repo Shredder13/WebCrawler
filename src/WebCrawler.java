@@ -134,7 +134,7 @@ public class WebCrawler {
 		String fixedHost = getFixedHostUrl(aHost);
 		Log.d(String.format("WebCrawler.start -> fixed host = %s", fixedHost));
 		try {
-			URL hostUrlObj = new URL(fixedHost);
+			HttpUrl hostUrlObj = new HttpUrl(fixedHost);
 			
 			InetAddress.getByName(hostUrlObj.getHost()).isReachable(1000);
 			hostUrl = fixedHost;
@@ -168,8 +168,16 @@ public class WebCrawler {
 	public void checkIfFinished() {
 		if (AnalyzerTask.getNumOfAnalyzersAlive() == 0 && DownloaderTask.getNumOfDownloadersAlive() == 0) {
 			setState(State.IDLE);
+			reset();
 			Log.d("Finished crawling!");
 		}
+	}
+	
+	private void reset() {
+		opennedPorts.clear();
+		visitedUrls.clear();
+		hostUrl = "";
+		crawlData.clear();
 	}
 	
 	/*public static void main(String[] args) {

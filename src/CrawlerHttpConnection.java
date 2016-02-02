@@ -6,7 +6,6 @@ import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.Socket;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,7 +36,7 @@ public class CrawlerHttpConnection {
 	}
 	
 	private void extractConnectionDetails(String urlStr) throws MalformedURLException {
-		URL url = new URL(urlStr);
+		HttpUrl url = new HttpUrl(urlStr);
 		
 		host = url.getHost();
 		
@@ -81,6 +80,8 @@ public class CrawlerHttpConnection {
 	private void sendRequest() throws IOException {
 		BufferedWriter socketOutputStream = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 		socketOutputStream.write(String.format("%s %s %s", method.toString(), path, version.toString()));
+		socketOutputStream.write(WebServer.CRLF);
+		socketOutputStream.write("User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2486.0 Safari/537.36 Edge/13.10586");
 		socketOutputStream.write(WebServer.CRLF);
 		socketOutputStream.write(WebServer.CRLF);
 		socketOutputStream.flush();

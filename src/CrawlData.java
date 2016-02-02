@@ -49,4 +49,10 @@ public class CrawlData {
 			data.put(key, value);
 		}
 	}
+	
+	public void clear() {
+		synchronized (lock) {
+			data.clear();
+		}
+	}
 }

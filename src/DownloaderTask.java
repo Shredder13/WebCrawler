@@ -40,8 +40,8 @@ public class DownloaderTask extends Task {
 			//check if external or internal link
 			boolean internal = false;
 			
-			URL urlObj = new URL(url);
-			URL origUrlObj = new URL(webCrawler.getHost());
+			HttpUrl urlObj = new HttpUrl(url);
+			HttpUrl origUrlObj = new HttpUrl(webCrawler.getHost());
 			internal = urlObj.getHost().equals(origUrlObj.getHost());
 			
 			//if visited, do not download. This is a HashSet --> contains is O(1).
