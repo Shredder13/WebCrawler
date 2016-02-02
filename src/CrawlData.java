@@ -1,5 +1,5 @@
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 public class CrawlData {
 
@@ -20,22 +20,26 @@ public class CrawlData {
 	private final Object lock = new Object();
 	
 	private HashMap<String, Object> data;
+	
+	private double sumRTT = 0;
+	private double numRTT = 0;
+	
 
 	public CrawlData() {
 		data = new HashMap<>();
 		data.put(RESPECT_ROBOTS_TXT, false);
-		data.put(NUM_OF_IMAGES, 0);
-		data.put(SIZE_OF_IMAGES, 0);
-		data.put(NUM_OF_VIDEOS, 0);
-		data.put(SIZE_OF_VIDEOS, 0);
-		data.put(NUM_OF_DOCUMENTS, 0);
-		data.put(SIZE_OF_DOCUMENTS, 0);
-		data.put(NUM_OF_PAGES, 0);
-		data.put(SIZE_OF_PAGES, 0);
-		data.put(NUM_OF_INTERNAL_LINKS, 0);
-		data.put(NUM_OF_EXTERNAL_LINKS, 0);
-		data.put(CONNECTED_DOMAINS, new ArrayList<String>());
-		data.put(AVG_RTT, 0);
+		data.put(NUM_OF_IMAGES, 0L);
+		data.put(SIZE_OF_IMAGES, 0L);
+		data.put(NUM_OF_VIDEOS, 0L);
+		data.put(SIZE_OF_VIDEOS, 0L);
+		data.put(NUM_OF_DOCUMENTS, 0L);
+		data.put(SIZE_OF_DOCUMENTS, 0L);
+		data.put(NUM_OF_PAGES, 0L);
+		data.put(SIZE_OF_PAGES, 0L);
+		data.put(NUM_OF_INTERNAL_LINKS, 0L);
+		data.put(NUM_OF_EXTERNAL_LINKS, 0L);
+		data.put(CONNECTED_DOMAINS, new HashSet<String>());
+		data.put(AVG_RTT, 0L);
 	}
 	
 	public Object get(String key) {
@@ -53,6 +57,14 @@ public class CrawlData {
 	public void clear() {
 		synchronized (lock) {
 			data.clear();
+		}
+	}
+	
+	public void updateAvgRTT(long rtt) {
+		synchronized (lock) {
+			sumRTT += rtt;
+			numRTT++;
+			data.put(AVG_RTT, sumRTT/numRTT);
 		}
 	}
 }

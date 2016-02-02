@@ -1,7 +1,7 @@
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.HashSet;
 
 public class DownloaderTask extends Task {
 
@@ -56,38 +56,63 @@ public class DownloaderTask extends Task {
 			
 			CrawlerHttpConnection conn;
 			CrawlerHttpConnection.Response response;
+			CrawlData cd = webCrawler.getCrawlData();
 			
-			switch(resourceType) {
-			case RESOURCE_TYPE_IMG:
-			case RESOURCE_TYPE_VIDEO:
-			case RESOURCE_TYPE_DOC:
-				//TODO: Just send HEAD request
-				conn = new CrawlerHttpConnection(HTTP_METHOD.HEAD, url, HTTP_VERSION.HTTP_1_0);
-				response = conn.getResponse();
-				conn.close();
-				
-				Log.d(String.format("Resource is a BLOB : url = %s", url));
-				
-				//TODO: update BLOB crawl data.
-				//webCrawler.getCrawlData().put(key, value);
-				break;
-			default:
-			case RESOURCE_TYPE_HREF:
+			long startMillis, endMillis;
+			
+			if (resourceType == RESOURCE_TYPE_HREF) {
 				conn = new CrawlerHttpConnection(HTTP_METHOD.GET, url, HTTP_VERSION.HTTP_1_0);
+				startMillis = System.currentTimeMillis();
 				response = conn.getResponse();
 				conn.close();
+				endMillis = System.currentTimeMillis();
 				
 				Log.d(String.format("Resource is a HTML : url = %s", url));
 				
 				if (internal) {
 					Log.d(String.format("HTML is internal! send to analyzer : url = %s", url));
+					cd.put(CrawlData.NUM_OF_INTERNAL_LINKS, (Long)cd.get(CrawlData.NUM_OF_INTERNAL_LINKS) + 1);
 					analyzersPool.submit(new AnalyzerTask(url, response.getBody(), downloadersPool, analyzersPool));
+				} else {
+					cd.put(CrawlData.NUM_OF_EXTERNAL_LINKS, (Long)cd.get(CrawlData.NUM_OF_EXTERNAL_LINKS) + 1);
+					((HashSet<String>) cd.get(CrawlData.CONNECTED_DOMAINS)).add(urlObj.getHost());
+					//TODO: WTF is "link of crawled domains"...?
 				}
 				
-				//TODO: update HTML crawl data.
-				//webCrawler.getCrawlData().put(key, value);
-				break;
+				cd.put(CrawlData.NUM_OF_PAGES, (Long)cd.get(CrawlData.NUM_OF_PAGES) + 1);
+				cd.put(CrawlData.SIZE_OF_PAGES, (Long)cd.get(CrawlData.SIZE_OF_PAGES) + Long.valueOf(response.getHeaders().get("content-length")));
+			} else {
+				
+				conn = new CrawlerHttpConnection(HTTP_METHOD.HEAD, url, HTTP_VERSION.HTTP_1_0);
+				startMillis = System.currentTimeMillis();
+				response = conn.getResponse();
+				conn.close();
+				endMillis = System.currentTimeMillis();
+				
+				if (response != null && response.getCode() == HTTP_CODE.C200_OK) {
+					Log.d(String.format("Resource is a BLOB : url = %s", url));
+					
+					if (response.getHeaders().containsKey("content-length")) {
+						switch(resourceType) {
+						case RESOURCE_TYPE_IMG:
+							cd.put(CrawlData.NUM_OF_IMAGES, (Long)cd.get(CrawlData.NUM_OF_IMAGES) + 1);
+							cd.put(CrawlData.SIZE_OF_IMAGES, (Long)cd.get(CrawlData.SIZE_OF_IMAGES) + Long.valueOf(response.getHeaders().get("content-length")));
+							break;
+						case RESOURCE_TYPE_VIDEO:
+							cd.put(CrawlData.NUM_OF_VIDEOS, (Long)cd.get(CrawlData.NUM_OF_VIDEOS) + 1);
+							cd.put(CrawlData.SIZE_OF_VIDEOS, (Long)cd.get(CrawlData.SIZE_OF_VIDEOS) + Long.valueOf(response.getHeaders().get("content-length")));
+							break;
+						case RESOURCE_TYPE_DOC:
+							cd.put(CrawlData.NUM_OF_DOCUMENTS, (Long)cd.get(CrawlData.NUM_OF_DOCUMENTS) + 1);
+							cd.put(CrawlData.SIZE_OF_DOCUMENTS, (Long)cd.get(CrawlData.SIZE_OF_DOCUMENTS) + Long.valueOf(response.getHeaders().get("content-length")));
+							break;
+						}
+					}
+				}
 			}
+			
+			webCrawler.getCrawlData().updateAvgRTT(endMillis - startMillis);
+			
 		} catch (MalformedURLException e) {
 			//Broken link
 			e.printStackTrace();
