@@ -1,7 +1,12 @@
+import com.sun.org.apache.xerces.internal.impl.xpath.regex.Match;
+
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.HashSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DownloaderTask extends Task {
 
@@ -39,24 +44,24 @@ public class DownloaderTask extends Task {
 			
 			//check if external or internal link
 			boolean internal = false;
-			
+
 			HttpUrl urlObj = new HttpUrl(url);
 			HttpUrl origUrlObj = new HttpUrl(webCrawler.getHost());
 			internal = urlObj.getHost().equals(origUrlObj.getHost());
-			
+
 			//if visited, do not download. This is a HashSet --> contains is O(1).
 			if (webCrawler.getVisitedUrls().contains(url)) {
 				return;
 			} else {
 				Log.d(String.format("Url not yet visited! processing further : url = %s", url));
-				webCrawler.getVisitedUrls().add(url);
+				webCrawler.addVisitedURL(url);
 			}
-			
-			//TODO: robots.txt handling
 			
 			CrawlerHttpConnection conn;
 			CrawlerHttpConnection.Response response;
 			CrawlData cd = webCrawler.getCrawlData();
+
+			handleRespectRobots(cd);
 			
 			long startMillis, endMillis;
 			
@@ -142,6 +147,27 @@ public class DownloaderTask extends Task {
 			webCrawler.checkIfFinished();
 		}
 	}
+
+	private void handleRespectRobots(CrawlData cd) {
+		if (cd.get(CrawlData.RESPECT_ROBOTS_TXT) == true) {
+			CrawlerHttpConnection con = new CrawlerHttpConnection(HTTP_METHOD.GET, "/robots.txt", HTTP_VERSION.HTTP_1_0);
+			String regex = "disallow:\\s(.+?\\s|.+)";
+//			String regex = "disallow:\\s*(.+?\\s|.+)";
+			Pattern pattern = Pattern.compile(regex);
+			String str = "";
+			try {
+				str = con.getResponse().getBody();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			Matcher match = pattern.matcher(str);
+			while (match.find()) {
+				downloadersPool.submit(new DownloaderTask(match.group(1).trim(), DownloaderTask.RESOURCE_TYPE_HREF,
+						downloadersPool, analyzersPool));
+			}
+		}
+	}
+
 	public static int getNumOfDownloadersAlive() {
 		synchronized (numDownloadersAliveLock) {
 			return numDownloadersAlive;

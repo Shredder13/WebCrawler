@@ -83,6 +83,10 @@ public class WebCrawler {
 	public HashSet<String> getVisitedUrls() {
 		return visitedUrls;
 	}
+
+	public void addVisitedURL(String url) {
+		visitedUrls.add(url);
+	}
 	
 	public ArrayList<String> getCrawlingHistory() {
 		ArrayList<String> result = new ArrayList<>();

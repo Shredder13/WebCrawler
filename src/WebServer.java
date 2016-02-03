@@ -147,7 +147,7 @@ public class WebServer {
 		ArrayList<String> result = new ArrayList<>();
 		
 		String[] extSplit = exts.split(",");
-		for (int i=0; i<extSplit.length; i++) {
+		for (int i = 0; i < extSplit.length; i++) {
 			result.add(extSplit[i]);
 		}
 		
