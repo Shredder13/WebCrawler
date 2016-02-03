@@ -14,6 +14,8 @@ public class DownloaderTask extends Task {
 	public static final int RESOURCE_TYPE_IMG = 1;
 	public static final int RESOURCE_TYPE_VIDEO = 2;
 	public static final int RESOURCE_TYPE_DOC = 3;
+
+	public static final String robots = "robots.txt";
 	
 	ThreadPool downloadersPool;
 	ThreadPool analyzersPool;
@@ -149,22 +151,32 @@ public class DownloaderTask extends Task {
 	}
 
 	private void handleRespectRobots(CrawlData cd) {
-		if (cd.get(CrawlData.RESPECT_ROBOTS_TXT) == true) {
-			CrawlerHttpConnection con = new CrawlerHttpConnection(HTTP_METHOD.GET, "/robots.txt", HTTP_VERSION.HTTP_1_0);
-			String regex = "disallow:\\s(.+?\\s|.+)";
-//			String regex = "disallow:\\s*(.+?\\s|.+)";
-			Pattern pattern = Pattern.compile(regex);
-			String str = "";
-			try {
+		String regex = "";
+		CrawlerHttpConnection con = new CrawlerHttpConnection(HTTP_METHOD.GET, webCrawler.getHost() + robots,
+				HTTP_VERSION.HTTP_1_0);
+		if ((boolean) cd.get(CrawlData.RESPECT_ROBOTS_TXT)) {
+			// surf only to allowed links, add black list of URLS
+			regex = "allow:\\s*(.+?\\s|.+)";
+		} else {
+			String disReg = "disallow:\\s*(.+?\\s|.+)";
+		}
+		Pattern pattern = Pattern.compile(regex);
+		String str = "";
+		try {
+			if (con.getResponse() != null) {
 				str = con.getResponse().getBody();
-			} catch (IOException e) {
-				e.printStackTrace();
+				str = str.toLowerCase();
+			} else {
+				return;
 			}
-			Matcher match = pattern.matcher(str);
-			while (match.find()) {
-				downloadersPool.submit(new DownloaderTask(match.group(1).trim(), DownloaderTask.RESOURCE_TYPE_HREF,
-						downloadersPool, analyzersPool));
-			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		Matcher match = pattern.matcher(str);
+		while (match.find()) {
+			String url = match.group(1).trim();
+			downloadersPool.submit(new DownloaderTask(webCrawler.getHost() + url, DownloaderTask.RESOURCE_TYPE_HREF,
+					downloadersPool, analyzersPool));
 		}
 	}
 
