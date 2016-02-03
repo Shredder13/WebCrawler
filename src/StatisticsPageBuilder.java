@@ -51,7 +51,7 @@ public class StatisticsPageBuilder {
 		int second = c.get(Calendar.SECOND);
 		
 		try {
-			String hostName = new HttpUrl(WebCrawler.getInstance().getHost()).getHost();
+			String hostName = new HttpUrl(WebCrawler.getInstance().getHostUrl()).getHost();
 			return String.format("%s-%d%02d%02d-%02d%02d%02d.html", hostName, year, month, day, hour, minute, second);
 		} catch (MalformedURLException e) {
 			e.printStackTrace();

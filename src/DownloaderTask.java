@@ -45,7 +45,7 @@ public class DownloaderTask extends Task {
 			boolean internal = false;
 
 			HttpUrl urlObj = new HttpUrl(url);
-			HttpUrl origUrlObj = new HttpUrl(webCrawler.getHost());
+			HttpUrl origUrlObj = new HttpUrl(webCrawler.getHostUrl());
 			internal = urlObj.getHost().equals(origUrlObj.getHost());
 
 			//if visited, do not download. This is a HashSet --> contains is O(1).
@@ -151,7 +151,7 @@ public class DownloaderTask extends Task {
 
 	private void handleRespectRobots(CrawlData cd) {
 		String regex = "";
-		CrawlerHttpConnection con = new CrawlerHttpConnection(HTTP_METHOD.GET, webCrawler.getHost() + robots,
+		CrawlerHttpConnection con = new CrawlerHttpConnection(HTTP_METHOD.GET, webCrawler.getHostUrl() + robots,
 				HTTP_VERSION.HTTP_1_0);
 		if ((boolean) cd.get(CrawlData.RESPECT_ROBOTS_TXT)) {
 			// surf only to allowed links, add black list of URLS
@@ -174,7 +174,7 @@ public class DownloaderTask extends Task {
 		Matcher match = pattern.matcher(str);
 		while (match.find()) {
 			String url = match.group(1).trim();
-			downloadersPool.submit(new DownloaderTask(webCrawler.getHost() + url, DownloaderTask.RESOURCE_TYPE_HREF,
+			downloadersPool.submit(new DownloaderTask(webCrawler.getHostUrl() + url, DownloaderTask.RESOURCE_TYPE_HREF,
 					downloadersPool, analyzersPool));
 		}
 	}
