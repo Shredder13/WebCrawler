@@ -1,2 +1,5 @@
 - Extracting resources which are not in <img> or <a> tag only (such as from javascripts, "background" attribute of <body> tag, etc).
+
 - Multi-threaded port scanner, for scanning fast.
+
+- Support HTTPS

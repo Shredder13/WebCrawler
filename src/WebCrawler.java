@@ -167,17 +167,22 @@ public class WebCrawler {
 	
 	public void checkIfFinished() {
 		if (AnalyzerTask.getNumOfAnalyzersAlive() == 0 && DownloaderTask.getNumOfDownloadersAlive() == 0) {
-			setState(State.IDLE);
+			buildStatisticsPage();
 			reset();
 			Log.d("Finished crawling!");
 		}
 	}
 	
+	private void buildStatisticsPage() {
+		
+	}
+
 	private void reset() {
 		opennedPorts.clear();
 		visitedUrls.clear();
 		hostUrl = "";
 		crawlData.clear();
+		setState(State.IDLE);
 	}
 	
 	/*public static void main(String[] args) {
