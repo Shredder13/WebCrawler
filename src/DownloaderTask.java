@@ -1,7 +1,12 @@
+import com.sun.org.apache.xerces.internal.impl.xpath.regex.Match;
+
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.HashSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DownloaderTask extends Task {
 
@@ -39,17 +44,17 @@ public class DownloaderTask extends Task {
 			
 			//check if external or internal link
 			boolean internal = false;
-			
+
 			HttpUrl urlObj = new HttpUrl(url);
 			HttpUrl origUrlObj = new HttpUrl(webCrawler.getHost());
 			internal = urlObj.getHost().equals(origUrlObj.getHost());
-			
+
 			//if visited, do not download. This is a HashSet --> contains is O(1).
 			if (webCrawler.getVisitedUrls().contains(url)) {
 				return;
 			} else {
 				Log.d(String.format("Url not yet visited! processing further : url = %s", url));
-				webCrawler.getVisitedUrls().add(url);
+				webCrawler.addVisitedURL(url);
 			}
 			
 			CrawlerHttpConnection conn;
@@ -76,7 +81,7 @@ public class DownloaderTask extends Task {
 				} else {
 					cd.put(CrawlData.NUM_OF_EXTERNAL_LINKS, (Long)cd.get(CrawlData.NUM_OF_EXTERNAL_LINKS) + 1);
 					((HashSet<String>) cd.get(CrawlData.CONNECTED_DOMAINS)).add(urlObj.getHost());
-					//TODO: WTF is "link of crawled domains"...?
+					//TODO: WTF is "link of crawled domains"...? @Nofar: @Nir, I think we should give links to them
 				}
 				
 				cd.put(CrawlData.NUM_OF_PAGES, (Long)cd.get(CrawlData.NUM_OF_PAGES) + 1);
@@ -145,8 +150,19 @@ public class DownloaderTask extends Task {
 
 	private void handleRespectRobots(CrawlData cd) {
 		if (cd.get(CrawlData.RESPECT_ROBOTS_TXT) == true) {
-
-			webCrawler.getVisitedUrls().add("/robots.txt");
+			CrawlerHttpConnection con = new CrawlerHttpConnection(HTTP_METHOD.GET, "/robots.txt", HTTP_VERSION.HTTP_1_0);
+			String regex = "disallow:\\s*(.+?\\s|.+)";
+			Pattern pattern = Pattern.compile(regex);
+			String str = "";
+			try {
+				str = con.getResponse().getBody();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			Matcher match = pattern.matcher(str);
+			while (match.find()) {
+				webCrawler.addVisitedURL(match.group(1).trim());
+			}
 		}
 	}
 
