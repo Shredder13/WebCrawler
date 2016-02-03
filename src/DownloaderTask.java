@@ -14,6 +14,8 @@ public class DownloaderTask extends Task {
 	public static final int RESOURCE_TYPE_IMG = 1;
 	public static final int RESOURCE_TYPE_VIDEO = 2;
 	public static final int RESOURCE_TYPE_DOC = 3;
+
+	public static final String robots = "robots.txt";
 	
 	ThreadPool downloadersPool;
 	ThreadPool analyzersPool;
@@ -150,7 +152,7 @@ public class DownloaderTask extends Task {
 
 	private void handleRespectRobots(CrawlData cd) {
 		if (cd.get(CrawlData.RESPECT_ROBOTS_TXT) == true) {
-			CrawlerHttpConnection con = new CrawlerHttpConnection(HTTP_METHOD.GET, "/robots.txt", HTTP_VERSION.HTTP_1_0);
+			CrawlerHttpConnection con = new CrawlerHttpConnection(HTTP_METHOD.GET, webCrawler.getHost() + robots, HTTP_VERSION.HTTP_1_0);
 			String regex = "disallow:\\s(.+?\\s|.+)";
 //			String regex = "disallow:\\s*(.+?\\s|.+)";
 			Pattern pattern = Pattern.compile(regex);
