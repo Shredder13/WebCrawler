@@ -164,7 +164,7 @@ public class DownloaderTask extends Task {
 			}
 			Matcher match = pattern.matcher(str);
 			while (match.find()) {
-				downloadersPool.submit(new DownloaderTask(match.group(1).trim(), DownloaderTask.RESOURCE_TYPE_HREF,
+				downloadersPool.submit(new DownloaderTask(webCrawler.getHost() + match.group(1).trim(), DownloaderTask.RESOURCE_TYPE_HREF,
 						downloadersPool, analyzersPool));
 			}
 		}
