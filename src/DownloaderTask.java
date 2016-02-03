@@ -81,7 +81,7 @@ public class DownloaderTask extends Task {
 				} else {
 					cd.put(CrawlData.NUM_OF_EXTERNAL_LINKS, (Long)cd.get(CrawlData.NUM_OF_EXTERNAL_LINKS) + 1);
 					((HashSet<String>) cd.get(CrawlData.CONNECTED_DOMAINS)).add(urlObj.getHost());
-					//TODO: WTF is "link of crawled domains"...? @Nofar: @Nir, I think we should give links to them
+					//TODO: WTF is "link of crawled domains"...?
 				}
 				
 				cd.put(CrawlData.NUM_OF_PAGES, (Long)cd.get(CrawlData.NUM_OF_PAGES) + 1);
@@ -151,7 +151,8 @@ public class DownloaderTask extends Task {
 	private void handleRespectRobots(CrawlData cd) {
 		if (cd.get(CrawlData.RESPECT_ROBOTS_TXT) == true) {
 			CrawlerHttpConnection con = new CrawlerHttpConnection(HTTP_METHOD.GET, "/robots.txt", HTTP_VERSION.HTTP_1_0);
-			String regex = "disallow:\\s*(.+?\\s|.+)";
+			String regex = "disallow:\\s(.+?\\s|.+)";
+//			String regex = "disallow:\\s*(.+?\\s|.+)";
 			Pattern pattern = Pattern.compile(regex);
 			String str = "";
 			try {
@@ -161,7 +162,8 @@ public class DownloaderTask extends Task {
 			}
 			Matcher match = pattern.matcher(str);
 			while (match.find()) {
-				webCrawler.addVisitedURL(match.group(1).trim());
+				downloadersPool.submit(new DownloaderTask(match.group(1).trim(), DownloaderTask.RESOURCE_TYPE_HREF,
+						downloadersPool, analyzersPool));
 			}
 		}
 	}
