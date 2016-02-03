@@ -152,6 +152,7 @@ public class WebCrawler {
 			try {
 				PortScanner ps = new PortScanner(fixedHost);
 				opennedPorts = ps.getOpennedPortsSync(1, 1024);
+				crawlData.put(CrawlData.OPENNED_PORTS, opennedPorts);
 			} catch (PortScannerException e) {
 				e.printStackTrace();
 			}
@@ -178,7 +179,10 @@ public class WebCrawler {
 	}
 	
 	private void buildStatisticsPage() {
-		
+		StatisticsPageBuilder pageBuilder = new StatisticsPageBuilder(crawlData);
+		if (!pageBuilder.build()) {
+			Log.d(String.format("Error creating statistics page for %s!", hostUrl));
+		}
 	}
 
 	private void reset() {

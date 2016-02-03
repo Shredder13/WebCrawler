@@ -3,7 +3,6 @@ import java.util.Calendar;
 public class Log {
 
 	public static synchronized void d(String msg) {
-		//TODO: Log in the format of "HH:MM:SS.MS : <msg>"
 		Calendar c = Calendar.getInstance();
 		int hour = c.get(Calendar.HOUR_OF_DAY);
 		int minute = c.get(Calendar.MINUTE);
