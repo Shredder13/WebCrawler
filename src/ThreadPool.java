@@ -63,7 +63,7 @@ public class ThreadPool {
 		
 		workers.clear();
 		
-		Log.d("Thread pool is shutdown");
+		Log.d("Thread pool is shutting down");
 	}
 	
 	/**
