@@ -98,7 +98,7 @@ public class WebCrawler {
 				
 				@Override
 				public boolean accept(File dir, String name) {
-					return name.matches("^\\w+_\\d+_\\d+\\.html");
+					return name.matches("^.+_\\d+_\\d+\\.html");
 				}
 			});	
 			

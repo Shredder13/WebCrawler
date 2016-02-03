@@ -2,6 +2,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.List;
 
 public class StatisticsPageBuilder {
@@ -51,7 +52,7 @@ public class StatisticsPageBuilder {
 		
 		try {
 			String hostName = new HttpUrl(WebCrawler.getInstance().getHost()).getHost();
-			return String.format("%s-%d%d%d-%d%d%d.html", hostName, year, month, day, hour, minute, second);
+			return String.format("%s-%d%02d%02d-%02d%02d%02d.html", hostName, year, month, day, hour, minute, second);
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 			return "domain-name-error";
@@ -80,7 +81,7 @@ public class StatisticsPageBuilder {
 	}
 	
 	private void connectedDomains(StringBuilder htmlSb) {
-		List<String> connectedDomains = (List<String>) cd.get(CrawlData.CONNECTED_DOMAINS);
+		HashSet<String> connectedDomains = (HashSet<String>) cd.get(CrawlData.CONNECTED_DOMAINS);
 		htmlSb.append("<p>Connected domains:<br><ul>");
 		for (String domain : connectedDomains) {
 			htmlSb.append(String.format("<li>%s</li>", domain));
