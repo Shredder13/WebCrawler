@@ -52,11 +52,11 @@ public class DownloaderTask extends Task {
 				webCrawler.getVisitedUrls().add(url);
 			}
 			
-			//TODO: robots.txt handling
-			
 			CrawlerHttpConnection conn;
 			CrawlerHttpConnection.Response response;
 			CrawlData cd = webCrawler.getCrawlData();
+
+			handleRespectRobots(cd);
 			
 			long startMillis, endMillis;
 			
@@ -142,6 +142,14 @@ public class DownloaderTask extends Task {
 			webCrawler.checkIfFinished();
 		}
 	}
+
+	private void handleRespectRobots(CrawlData cd) {
+		if (cd.get(CrawlData.RESPECT_ROBOTS_TXT) == true) {
+
+			webCrawler.getVisitedUrls().add("/robots.txt");
+		}
+	}
+
 	public static int getNumOfDownloadersAlive() {
 		synchronized (numDownloadersAliveLock) {
 			return numDownloadersAlive;
