@@ -4,7 +4,7 @@ import java.util.regex.Pattern;
 
 public class HttpUrl {
 
-	private static final String URL_REGEX = "^(http|https)?:\\/\\/((www\\.)?(.+?))(:(\\d{1,5}))?(\\/?|\\/.*)$";
+	private static final String URL_REGEX = "^(http|https)?:\\/\\/(.+?)(:(\\d{1,5}))?(\\/?|\\/.*)$";
 	
 	private String url;
 	
@@ -18,16 +18,16 @@ public class HttpUrl {
 		if (m.matches()) {
 			protocol = m.group(1);
 			
-			host = m.group(4);
+			host = m.group(2);
 			
-			String portStr = m.group(6);
+			String portStr = m.group(4);
 			if (portStr != null && portStr.length() > 0) {
 				port = Integer.valueOf(portStr);
 			} else {
 				port = -1;
 			}
 			
-			file = m.group(7);
+			file = m.group(5);
 			if (file == null || file != null && file.length() < 2) {
 				file = "/";
 			}

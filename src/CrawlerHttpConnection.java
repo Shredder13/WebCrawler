@@ -64,11 +64,14 @@ public class CrawlerHttpConnection {
 		char[] cbuf = new char[4096];
 		StringBuilder responseSb = new StringBuilder();
 		Log.d("Waiting for response...");
-		while(socketInputStream.read(cbuf) != -1) {
-			responseSb.append(cbuf);
+		int c;
+		while((c = socketInputStream.read()) != -1) {
+			responseSb.append((char) c);
 		}
 		Log.d("Done waiting.");
-		System.out.println(responseSb);
+		//System.out.println(responseSb);
+		
+		socket.close();
 		
 		if (parseHttpResponse(responseSb.toString())) {
 			return response;
@@ -78,12 +81,15 @@ public class CrawlerHttpConnection {
 	}
 	
 	private void sendRequest() throws IOException {
+		
+		StringBuilder reqSb = new StringBuilder();
+		reqSb.append(String.format("%s %s %s", method.toString(), path, version.toString()));
+		reqSb.append(WebServer.CRLF);
+		
 		BufferedWriter socketOutputStream = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-		socketOutputStream.write(String.format("%s %s %s", method.toString(), path, version.toString()));
-		socketOutputStream.write(WebServer.CRLF);
-		socketOutputStream.write("User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2486.0 Safari/537.36 Edge/13.10586");
-		socketOutputStream.write(WebServer.CRLF);
-		socketOutputStream.write(WebServer.CRLF);
+		reqSb.append(WebServer.CRLF);
+		
+		socketOutputStream.write(reqSb.toString());
 		socketOutputStream.flush();
 	}
 	
@@ -106,6 +112,14 @@ public class CrawlerHttpConnection {
 		if (response.headers.containsKey("content-length")) {
 			int contentLength = Integer.valueOf(response.headers.get("content-length"));
 			response.body = reader.readUntil(contentLength);
+		} else {
+			StringBuilder sb = new StringBuilder();
+			int c;
+			while ((c = reader.read()) != -1) {
+				sb.append((char)c);
+			}
+			response.body = sb.toString();
+			response.headers.put("content-length", String.valueOf(response.body.length()));
 		}
 		
 		return resLineOk && resHeadersOk;
@@ -141,18 +155,18 @@ public class CrawlerHttpConnection {
 		for (String s : headersList) {
 			Matcher matcher = pattern.matcher(s); 
 			if (matcher.matches()) {
-				String key = matcher.group(1);
-				String value = matcher.group(2);
+				String key = matcher.group(1).toLowerCase();
+				String value = matcher.group(2).toLowerCase();
 				
 				if (key != null && value != null) {
-					if (!hasContentLength) hasContentLength = key.toLowerCase().equals("content-length");
-					if (!hasContentType) hasContentType = key.toLowerCase().equals("content-type");
-					response.headers.put(matcher.group(1), matcher.group(2));
+					if (!hasContentLength) hasContentLength = key.equals("content-length");
+					if (!hasContentType) hasContentType = key.equals("content-type");
+					response.headers.put(key, value);
 				}
 			}
 		}
 		
-		return hasContentLength && hasContentType;
+		return /*hasContentLength &&*/ hasContentType;
 	}
 	
 	public class Response {
@@ -189,7 +203,7 @@ public class CrawlerHttpConnection {
 	}
 	
 	/*public static void main(String[] args) {
-		CrawlerHttpConnection req = new CrawlerHttpConnection(HTTP_METHOD.HEAD, "http://localhost:8080/", HTTP_VERSION.HTTP_1_0);
+		CrawlerHttpConnection req = new CrawlerHttpConnection(HTTP_METHOD.HEAD, "http://www.sheldonbrown.com/", HTTP_VERSION.HTTP_1_0);
 		try {
 			req.getResponse();
 		} catch (UnknownHostException e) {

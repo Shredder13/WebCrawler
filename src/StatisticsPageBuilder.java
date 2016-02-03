@@ -61,7 +61,7 @@ public class StatisticsPageBuilder {
 
 	private void avgRtt(StringBuilder htmlSb) {
 		String avgRtt = cd.get(CrawlData.AVG_RTT).toString();
-		htmlSb.append(String.format("<p>Average RTT: %s.</p>", avgRtt));
+		htmlSb.append(String.format("<p>Average RTT: %s ms.</p>", avgRtt));
 	}
 	
 	private void openedPorts(StringBuilder htmlSb) {

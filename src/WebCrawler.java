@@ -151,7 +151,7 @@ public class WebCrawler {
 		if (portScan) {
 			try {
 				PortScanner ps = new PortScanner(fixedHost);
-				opennedPorts = ps.getOpennedPortsSync(1, 1024);
+				opennedPorts = ps.getOpennedPortsSync(80, 80);
 				crawlData.put(CrawlData.OPENNED_PORTS, opennedPorts);
 			} catch (PortScannerException e) {
 				e.printStackTrace();

@@ -1,6 +1,3 @@
-import com.sun.org.apache.xerces.internal.impl.xpath.regex.Match;
-
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
@@ -63,7 +60,7 @@ public class DownloaderTask extends Task {
 			CrawlerHttpConnection.Response response;
 			CrawlData cd = webCrawler.getCrawlData();
 
-			handleRespectRobots(cd);
+			//handleRespectRobots(cd);
 			
 			long startMillis, endMillis;
 			
@@ -74,20 +71,22 @@ public class DownloaderTask extends Task {
 				conn.close();
 				endMillis = System.currentTimeMillis();
 				
-				Log.d(String.format("Resource is a HTML : url = %s", url));
-				
-				if (internal) {
-					Log.d(String.format("HTML is internal! send to analyzer : url = %s", url));
-					cd.put(CrawlData.NUM_OF_INTERNAL_LINKS, (Long)cd.get(CrawlData.NUM_OF_INTERNAL_LINKS) + 1);
-					analyzersPool.submit(new AnalyzerTask(url, response.getBody(), downloadersPool, analyzersPool));
-				} else {
-					cd.put(CrawlData.NUM_OF_EXTERNAL_LINKS, (Long)cd.get(CrawlData.NUM_OF_EXTERNAL_LINKS) + 1);
-					((HashSet<String>) cd.get(CrawlData.CONNECTED_DOMAINS)).add(urlObj.getHost());
-					//TODO: WTF is "link of crawled domains"...?
+				//TODO: Remove the C200_OK part when doing the 302 bonus!
+				if (response != null && response.getCode() == HTTP_CODE.C200_OK) {
+					Log.d(String.format("Resource is a HTML : url = %s", url));
+					if (internal) {
+						Log.d(String.format("HTML is internal! send to analyzer : url = %s", url));
+						cd.put(CrawlData.NUM_OF_INTERNAL_LINKS, (Long)cd.get(CrawlData.NUM_OF_INTERNAL_LINKS) + 1);
+						analyzersPool.submit(new AnalyzerTask(url, response.getBody(), downloadersPool, analyzersPool));
+					} else {
+						cd.put(CrawlData.NUM_OF_EXTERNAL_LINKS, (Long)cd.get(CrawlData.NUM_OF_EXTERNAL_LINKS) + 1);
+						((HashSet<String>) cd.get(CrawlData.CONNECTED_DOMAINS)).add(urlObj.getHost());
+						//TODO: WTF is "link of crawled domains"...?
+					}
+					
+					cd.put(CrawlData.NUM_OF_PAGES, (Long)cd.get(CrawlData.NUM_OF_PAGES) + 1);
+					cd.put(CrawlData.SIZE_OF_PAGES, (Long)cd.get(CrawlData.SIZE_OF_PAGES) + Long.valueOf(response.getHeaders().get("content-length")));
 				}
-				
-				cd.put(CrawlData.NUM_OF_PAGES, (Long)cd.get(CrawlData.NUM_OF_PAGES) + 1);
-				cd.put(CrawlData.SIZE_OF_PAGES, (Long)cd.get(CrawlData.SIZE_OF_PAGES) + Long.valueOf(response.getHeaders().get("content-length")));
 			} else {
 				
 				conn = new CrawlerHttpConnection(HTTP_METHOD.HEAD, url, HTTP_VERSION.HTTP_1_0);

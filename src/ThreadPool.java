@@ -108,7 +108,10 @@ public class ThreadPool {
 						Log.d("WorkerThread.run() : Cannot pull task from queue!");
 					}
 					//e.printStackTrace();
-				} 				
+				} catch (Exception e) {
+					//Any other exception, just print it but don't kill the worker...
+					e.printStackTrace();
+				}
 			}
 			
 			Log.d("WorkerThread.run() : Worker thread finished!");

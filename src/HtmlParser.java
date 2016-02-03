@@ -91,7 +91,7 @@ public class HtmlParser {
 	/**
 	 * 
 	 * @return regex in the form<br>
-	 * (\w+\.((bmp|jpg|png|gif|ico)|(avi|mpg|mp4|wmv|mov|flv|swf|mkv)|(pdf|doc|docx|xls|xlsx|ppt|pptx)))["']|(a href="(.+?)")
+	 * ["'](.+\.((bmp|jpg|png|gif|ico)|(avi|mpg|mp4|wmv|mov|flv|swf|mkv)|(pdf|doc|docx|xls|xlsx|ppt|pptx)))["']|(a href="(.+?)")
 	 * <br>
 	 * group #1 - if not empty, it is a file with one of the extensions.<br>
 	 * group #2 - indicates the extension.<br>
@@ -102,7 +102,7 @@ public class HtmlParser {
 	 * group #7 - this is the link content of group #6.
 	 */
 	private String buildRegex() {
-		StringBuilder regexSB = new StringBuilder("(\\w+\\.(");
+		StringBuilder regexSB = new StringBuilder("[\"'](.+\\.(");
 		
 		addExtToRegex(imgExts, regexSB);
 		regexSB.append("|");
@@ -135,16 +135,17 @@ public class HtmlParser {
 		
 		url = url.replace('\\', '/');
 		int pathEnd = url.lastIndexOf("/");
-		return url.substring(0, pathEnd + 1);
+		//Return the url without trailing "/".
+		return url.substring(0, pathEnd);
 	}
 	
 	private String makeAbsolutePath(String src) {
 		String result = "";
 		if (src.startsWith("/")) {
 			result = absServerPath + src;
-		} else if (!src.matches("^http://.+")) {
-			//if the source starts with something different than http://
-			result =  absServerPath + src;
+		} else if (!src.matches("^(http|https)://.+")) {
+			//if the source starts with something different than http(s)://
+			result =  absServerPath + "/" + src;
 		} else {
 			result = src;
 		}

@@ -35,6 +35,9 @@ public class PortScanner {
 	
 	public PortScanner(String host) {
 		this.host = host.replace("http://", "");
+		if (this.host.endsWith("/")) {
+			this.host = this.host.substring(0, this.host.length() - 1);
+		}
 		openedPorts = new ArrayList<>();
 		
 		threadPool = new ThreadPool(MAX_THREADS);
