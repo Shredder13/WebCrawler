@@ -1,4 +1,4 @@
-<form id="lab2form" method="get" action="execResult.html">
+<form id="lab2form" method="POST" action="execResult.html">
 	<table>
 		<tr>
 			<td>Domain: <input type="text" id="txtDomain" name="txtDomain" /></td>
@@ -13,4 +13,5 @@
 			<td><input type="submit" value="Start Crawler"/></td>
 		</tr>
 	</table>
+	<input type="hidden" name="hIsFromForm" id="hIsFromForm" value="true"/>
 </form>

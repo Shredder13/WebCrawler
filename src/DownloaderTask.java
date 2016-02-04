@@ -62,14 +62,10 @@ public class DownloaderTask extends Task {
 
 			//handleRespectRobots(cd);
 			
-			long startMillis, endMillis;
-			
 			if (resourceType == RESOURCE_TYPE_HREF) {
 				conn = new CrawlerHttpConnection(HTTP_METHOD.GET, url, HTTP_VERSION.HTTP_1_0);
-				startMillis = System.currentTimeMillis();
 				response = conn.getResponse();
 				conn.close();
-				endMillis = System.currentTimeMillis();
 				
 				//TODO: Remove the C200_OK part when doing the 302 bonus!
 				if (response != null && response.getCode() == HTTP_CODE.C200_OK) {
@@ -90,10 +86,8 @@ public class DownloaderTask extends Task {
 			} else {
 				
 				conn = new CrawlerHttpConnection(HTTP_METHOD.HEAD, url, HTTP_VERSION.HTTP_1_0);
-				startMillis = System.currentTimeMillis();
 				response = conn.getResponse();
 				conn.close();
-				endMillis = System.currentTimeMillis();
 				
 				if (response != null && response.getCode() == HTTP_CODE.C200_OK) {
 					Log.d(String.format("Resource is a BLOB : url = %s", url));
@@ -117,7 +111,9 @@ public class DownloaderTask extends Task {
 				}
 			}
 			
-			webCrawler.getCrawlData().updateAvgRTT(endMillis - startMillis);
+			if (response != null) {
+				webCrawler.getCrawlData().updateAvgRTT(response.getRTT());
+			}
 			
 		} catch (MalformedURLException e) {
 			//Broken link

@@ -165,12 +165,17 @@ public class WebServerHttpResponse {
     	default:
     	case IDLE:
 			try {
-				HashMap<String, String> getParams = request.getGetParamsMap();
-				String host = URLDecoder.decode(getParams.get("txtDomain"),"utf-8");
-				boolean portScan = getParams.get("cbPortScan") != null && getParams.get("cbPortScan").equals("on");
-				boolean disrespectRobotsTxt = getParams.get("cbDisrespectRobots") != null && getParams.get("cbDisrespectRobots").equals("on");
-				crawler.start(host, portScan, disrespectRobotsTxt);
-    			formHolder = "Started crawler successfully!";
+				HashMap<String, String> getParams = request.getPostParamsMap();
+				if (getParams.containsKey("hIsFromForm")) {
+					String host = URLDecoder.decode(getParams.get("txtDomain"),"utf-8");
+					boolean portScan = getParams.get("cbPortScan") != null && getParams.get("cbPortScan").equals("on");
+					boolean disrespectRobotsTxt = getParams.get("cbDisrespectRobots") != null && getParams.get("cbDisrespectRobots").equals("on");
+					crawler.start(host, portScan, disrespectRobotsTxt);
+	    			formHolder = "Started crawler successfully!";
+				} else {
+					//TODO: 403 forbidden
+					formHolder = "USE THE FORM PLEASE";
+				}
 			} catch (CrawlingException | UnsupportedEncodingException e) {
 				formHolder = new String(readFile(new File("crawler_form.html")));
 				formHolder += String.format("<br>Crawler failed to start because: %s", e.getMessage());
@@ -186,6 +191,17 @@ public class WebServerHttpResponse {
     	
 		return html.getBytes();
 	}
+    
+    private boolean verifyHidden() {
+    	String referer = request.getHeaders().get("referer");
+    	
+    	//No such header? return false
+    	if (referer == null) {
+    		return false;
+    	}
+    	
+    	return true;
+    }
 
 	private byte[] buildIndex(byte[] bFile) throws IOException {
     	

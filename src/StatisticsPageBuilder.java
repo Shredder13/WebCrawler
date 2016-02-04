@@ -26,6 +26,7 @@ public class StatisticsPageBuilder {
 			connectedDomains(htmlSb);
 			openedPorts(htmlSb);
 			avgRtt(htmlSb);
+			linkToMainPage(htmlSb);
 			
 			htmlSb.append("</body></html>");
 			
@@ -41,6 +42,10 @@ public class StatisticsPageBuilder {
 		}
 	}
 	
+	private void linkToMainPage(StringBuilder htmlSb) {
+		htmlSb.append("<p>Link to the main page: <a href src=\"index.html\">here</a></p>");
+	}
+
 	private String getFileName() {
 		Calendar c = Calendar.getInstance();
 		int year = c.get(Calendar.YEAR);
