@@ -116,14 +116,6 @@ public class DownloaderTask extends Task {
 			if (response != null) {
 				webCrawler.getCrawlData().updateAvgRTT(response.getRTT());
 			}
-			
-		} catch (MalformedURLException e) {
-			//Broken link
-			e.printStackTrace();
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
