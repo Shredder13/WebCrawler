@@ -61,18 +61,20 @@ public class CrawlerHttpConnection {
 		sendRequest();
 		
 		BufferedReader socketInputStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-		char[] cbuf = new char[4096];
 		StringBuilder responseSb = new StringBuilder();
 		Log.d("Waiting for response...");
+		long startMillis = System.currentTimeMillis();
 		int c;
 		while((c = socketInputStream.read()) != -1) {
 			responseSb.append((char) c);
 		}
+		long endMillis = System.currentTimeMillis();
 		Log.d("Done waiting.");
 		//System.out.println(responseSb);
 		
 		socket.close();
 		
+		response.rtt = endMillis - startMillis;
 		if (parseHttpResponse(responseSb.toString())) {
 			return response;
 		}
@@ -174,6 +176,7 @@ public class CrawlerHttpConnection {
 		private HTTP_CODE code;
 		private HashMap<String,String> headers;
 		private String body;
+		private long rtt; 
 		
 		public Response() {
 			headers = new HashMap<>();
@@ -189,6 +192,9 @@ public class CrawlerHttpConnection {
 		}
 		public String getBody() {
 			return body;
+		}
+		public long getRTT() {
+			return rtt;
 		}
 	}
 
