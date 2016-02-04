@@ -22,12 +22,16 @@ public class CrawlData {
 	
 	private HashMap<String, Object> data;
 	
-	private double sumRTT = 0;
-	private double numRTT = 0;
+	private double sumRTT;
+	private double numRTT;
 	
 
 	public CrawlData() {
 		data = new HashMap<>();
+		init();
+	}
+	
+	private void init() {
 		data.put(RESPECT_ROBOTS_TXT, false);
 		data.put(NUM_OF_IMAGES, 0L);
 		data.put(SIZE_OF_IMAGES, 0L);
@@ -41,6 +45,9 @@ public class CrawlData {
 		data.put(NUM_OF_EXTERNAL_LINKS, 0L);
 		data.put(CONNECTED_DOMAINS, new HashSet<String>());
 		data.put(AVG_RTT, 0L);
+		
+		sumRTT = 0;
+		numRTT = 0;
 		
 		//NOTE: the ports are added dynamically, if requested.
 		//If data.get(OPENNED_PORTS) == null then no port scan asked.
@@ -60,7 +67,7 @@ public class CrawlData {
 	
 	public void clear() {
 		synchronized (lock) {
-			data.clear();
+			init();
 		}
 	}
 	

@@ -126,6 +126,8 @@ public class DownloaderTask extends Task {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
 		} finally {
 			decreaseNumOfAnalyzersAlive();
 		}
