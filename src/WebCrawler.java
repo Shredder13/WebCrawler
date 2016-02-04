@@ -60,7 +60,7 @@ public class WebCrawler {
 		analyzersPool.start();
 	}
 	
-	public String getHost() {
+	public String getHostUrl() {
 		return hostUrl;
 	}
 
@@ -98,7 +98,7 @@ public class WebCrawler {
 				
 				@Override
 				public boolean accept(File dir, String name) {
-					return name.matches("^\\w+_\\d+_\\d+\\.html");
+					return name.matches("^.+_\\d+_\\d+\\.html");
 				}
 			});	
 			
@@ -152,6 +152,7 @@ public class WebCrawler {
 			try {
 				PortScanner ps = new PortScanner(fixedHost);
 				opennedPorts = ps.getOpennedPortsSync(1, 1024);
+				crawlData.put(CrawlData.OPENNED_PORTS, opennedPorts);
 			} catch (PortScannerException e) {
 				e.printStackTrace();
 			}
@@ -171,17 +172,25 @@ public class WebCrawler {
 	
 	public void checkIfFinished() {
 		if (AnalyzerTask.getNumOfAnalyzersAlive() == 0 && DownloaderTask.getNumOfDownloadersAlive() == 0) {
-			setState(State.IDLE);
+			buildStatisticsPage();
 			reset();
 			Log.d("Finished crawling!");
 		}
 	}
 	
+	private void buildStatisticsPage() {
+		StatisticsPageBuilder pageBuilder = new StatisticsPageBuilder(crawlData);
+		if (!pageBuilder.build()) {
+			Log.d(String.format("Error creating statistics page for %s!", hostUrl));
+		}
+	}
+
 	private void reset() {
 		opennedPorts.clear();
 		visitedUrls.clear();
 		hostUrl = "";
 		crawlData.clear();
+		setState(State.IDLE);
 	}
 	
 	/*public static void main(String[] args) {

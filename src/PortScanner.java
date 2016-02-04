@@ -35,6 +35,9 @@ public class PortScanner {
 	
 	public PortScanner(String host) {
 		this.host = host.replace("http://", "");
+		if (this.host.endsWith("/")) {
+			this.host = this.host.substring(0, this.host.length() - 1);
+		}
 		openedPorts = new ArrayList<>();
 		
 		threadPool = new ThreadPool(MAX_THREADS);
@@ -42,23 +45,27 @@ public class PortScanner {
 		Log.d("Port scanner is ready");
 	}
 	
+	final Object waitForCompletion = new Object();
 	public ArrayList<Integer> getOpennedPortsSync(int start, int end) throws PortScannerException {
 		
 		final ArrayList<Integer> result = new ArrayList<>();
-		final Object waitForCompletion = new Object();
 		
 		IOnPortScanFinished finishScanningAll = new IOnPortScanFinished() {
 			@Override
 			public void onPortScanFinished(ArrayList<Integer> openedPorts) {
-				result.addAll(openedPorts);
-				waitForCompletion.notifyAll();
+				synchronized (waitForCompletion) {
+					result.addAll(openedPorts);
+					waitForCompletion.notifyAll();
+				}
 			}
 		};
 		
 		startScanAsync(start, end, finishScanningAll);
 		
 		try {
-			waitForCompletion.wait();
+			synchronized (waitForCompletion) {
+				waitForCompletion.wait();
+			}
 		} catch (InterruptedException e) {
 			throw new PortScannerException("Unknown error");
 		}
@@ -162,13 +169,18 @@ public class PortScanner {
 	
 	/*public static void main(String[] args) {
 		final PortScanner scanner = new PortScanner("www.walla.co.il");
-		scanner.startScanAsync(80, 100, new IOnPortScanFinished() {
-			
-			@Override
-			public void onPortScanFinished(ArrayList<Integer> openedPorts) {
-				Log.d("Port scan have finished");
-				scanner.shutdown();
-			}
-		});
+		try {
+			scanner.startScanAsync(1, 1024, new IOnPortScanFinished() {
+				
+				@Override
+				public void onPortScanFinished(ArrayList<Integer> openedPorts) {
+					Log.d("Port scan have finished");
+					scanner.shutdown();
+				}
+			});
+		} catch (PortScannerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}*/
 }
