@@ -133,7 +133,7 @@ public class WebServer {
 				}
 			}
 		} catch (Exception e) {
-			Log.d("Error reading or parsing config file");
+			Log.d("Error in reading or parsing config file");
 			//e.printStackTrace();
 			throw e;
 		} finally {

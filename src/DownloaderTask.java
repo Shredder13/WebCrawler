@@ -1,6 +1,5 @@
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -11,8 +10,10 @@ public class DownloaderTask extends Task {
 	public static final int RESOURCE_TYPE_IMG = 1;
 	public static final int RESOURCE_TYPE_VIDEO = 2;
 	public static final int RESOURCE_TYPE_DOC = 3;
+	public static final String ROBOTS = "robots.txt";
 
-	public static final String robots = "robots.txt";
+	public ArrayList<Pattern> blackList;
+	public ArrayList<Pattern> whiteList;
 	
 	ThreadPool downloadersPool;
 	ThreadPool analyzersPool;
@@ -53,6 +54,7 @@ public class DownloaderTask extends Task {
 			HttpUrl origUrlObj = new HttpUrl(webCrawler.getHostUrl());
 			internal = urlObj.getHost().equals(origUrlObj.getHost());
 
+			//TODO: add check in black and white lists according to dis/respect robots
 			//if visited, do not download. This is a HashSet --> contains is O(1).
 			if (webCrawler.getVisitedUrls().contains(url)) {
 				return;
@@ -65,8 +67,8 @@ public class DownloaderTask extends Task {
 			CrawlerHttpConnection.Response response;
 			CrawlData cd = webCrawler.getCrawlData();
 
-			//handleRespectRobots(cd);
-			
+			handleRespectRobots();
+
 			if (resourceType == RESOURCE_TYPE_HREF) {
 				conn = new CrawlerHttpConnection(HTTP_METHOD.GET, url, HTTP_VERSION.HTTP_1_0);
 				response = conn.getResponse();
@@ -119,14 +121,6 @@ public class DownloaderTask extends Task {
 			if (response != null) {
 				webCrawler.getCrawlData().updateAvgRTT(response.getRTT());
 			}
-			
-		} catch (MalformedURLException e) {
-			//Broken link
-			e.printStackTrace();
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
@@ -152,17 +146,32 @@ public class DownloaderTask extends Task {
 		}
 	}
 
-	private void handleRespectRobots(CrawlData cd) {
-		String regex = "";
-		CrawlerHttpConnection con = new CrawlerHttpConnection(HTTP_METHOD.GET, webCrawler.getHostUrl() + robots,
-				HTTP_VERSION.HTTP_1_0);
-		if ((boolean) cd.get(CrawlData.RESPECT_ROBOTS_TXT)) {
-			// surf only to allowed links, add black list of URLS
-			regex = "allow:\\s*(.+?\\s|.+)";
-		} else {
-			String disReg = "disallow:\\s*(.+?\\s|.+)";
+	/**
+	 * adds matching regexes to the list of Patterns as a pattern
+	 * @param match given matcher whose results will be added to list
+	 * @param list given list to which the results will be added
+     */
+	private void addPatternsToList(Matcher match, ArrayList<Pattern> list) {
+		while (match.find()) {
+			String url = match.group(1).trim();
+			url = webCrawler.getHostUrl() + url;
+			String nurl = url.replace("//", "/");
+			list.add(Pattern.compile(nurl));
 		}
-		Pattern pattern = Pattern.compile(regex);
+	}
+
+	/**
+	 * gets the robots.txt file from the host and creates a while list and a black list
+	 * when crawling it will be taken into account if the urls should be surfed to by the
+	 * respect/disrespect robots user request
+	 */
+	private void handleRespectRobots() {
+		String allowReg = "allow:\\s*(.+?\\s|.+)";
+		String disallowReg = "disallow:\\s*(.+?\\s|.+)";
+		Pattern allowPattern = Pattern.compile(allowReg);
+		Pattern disallowPattern = Pattern.compile(disallowReg);
+		CrawlerHttpConnection con = new CrawlerHttpConnection(HTTP_METHOD.GET, webCrawler.getHostUrl() + ROBOTS,
+				HTTP_VERSION.HTTP_1_0);
 		String str = "";
 		try {
 			if (con.getResponse() != null) {
@@ -174,12 +183,10 @@ public class DownloaderTask extends Task {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		Matcher match = pattern.matcher(str);
-		while (match.find()) {
-			String url = match.group(1).trim();
-			downloadersPool.submit(new DownloaderTask(webCrawler.getHostUrl() + url, DownloaderTask.RESOURCE_TYPE_HREF,
-					downloadersPool, analyzersPool));
-		}
+		Matcher allowMatch = allowPattern.matcher(str);
+		Matcher disallowMatch = disallowPattern.matcher(str);
+		addPatternsToList(allowMatch, whiteList);
+		addPatternsToList(disallowMatch, blackList);
 	}
 
 	public static int getNumOfDownloadersAlive() {
