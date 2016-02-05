@@ -105,8 +105,8 @@ public class HtmlParser {
 	private void addResourceToList(String resPath, ArrayList<String> resList) {		
 		
 		resPath = makeAbsolutePath(resPath);
-		if (resPath.contains("..")) {
-			resPath = removeDouleDots(resPath);
+		if (resPath.contains("..") || resPath.contains("/./")) {
+			resPath = handleDots(resPath);
 		}
 		
 		if (!resList.contains(resPath)) {
@@ -120,7 +120,7 @@ public class HtmlParser {
 	 * @param resPath
 	 * @return for the example above, it returns http://www.website.com/page.html
 	 */
-	private String removeDouleDots(String resPath) {
+	private String handleDots(String resPath) {
 		String[] urlPartsArr = resPath.split("/");
 		
 		ArrayList<String> resultUrlParts = new ArrayList<>();
@@ -129,9 +129,11 @@ public class HtmlParser {
 		//otherwise we add the url part.
 		for (int i=0; i<urlPartsArr.length; i++) {
 			if (urlPartsArr[i].equals("..")) {
-				resultUrlParts.remove(i-1);
+				resultUrlParts.remove(i-1);	
 			} else {
-				resultUrlParts.add(urlPartsArr[i]);
+				if (!urlPartsArr[i].equals(".")) {
+					resultUrlParts.add(urlPartsArr[i]);
+				}
 			}
 		}
 		

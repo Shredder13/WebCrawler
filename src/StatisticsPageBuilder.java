@@ -1,4 +1,6 @@
+import java.io.File;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Calendar;
@@ -43,7 +45,7 @@ public class StatisticsPageBuilder {
 	}
 	
 	private void linkToMainPage(StringBuilder htmlSb) {
-		htmlSb.append("<p>Link to the main page: <a href src=\"index.html\">here</a></p>");
+		htmlSb.append(String.format("<p>Link to the main page: <a href=\"http://localhost:%d/\">here</a></p>", WebServer.port));
 	}
 
 	private String getFileName() {
@@ -57,7 +59,7 @@ public class StatisticsPageBuilder {
 		
 		try {
 			String hostName = new HttpUrl(WebCrawler.getInstance().getHostUrl()).getHost();
-			return String.format("%s-%d%02d%02d-%02d%02d%02d.html", hostName, year, month, day, hour, minute, second);
+			return String.format("%s_%04d%02d%02d_%02d%02d%02d.html", hostName, year, month, day, hour, minute, second);
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 			return "domain-name-error";
@@ -86,11 +88,33 @@ public class StatisticsPageBuilder {
 	}
 	
 	private void connectedDomains(StringBuilder htmlSb) {
+		String root = WebServer.root;
+		File rootFolder = new File(root);
+		File[] files = rootFolder.listFiles(new FilenameFilter() {
+			
+			@Override
+			public boolean accept(File dir, String name) {
+				return name.matches("^.+_\\d+_\\d+\\.html");
+			}
+		});	
+		
+		HashSet<String> historyDomains = new HashSet<>();
+		if (files != null) {
+			for (File f : files) {
+				String fname = f.getName();
+				historyDomains.add(fname.substring(0, fname.indexOf('_')));
+			}
+		}
+		
 		HashSet<String> connectedDomains = (HashSet<String>) cd.get(CrawlData.CONNECTED_DOMAINS);
 		htmlSb.append("<p>Connected domains:<br><ul>");
+		
 		for (String domain : connectedDomains) {
-			htmlSb.append(String.format("<li>%s</li>", domain));
-			//TODO: add links to "connected domains".
+			htmlSb.append("<li>").append(domain);
+			if (historyDomains.contains(domain)) {
+				htmlSb.append(String.format(" : <a href=\"http://%s/\">%s</a>", domain, domain));
+			}
+			htmlSb.append("</li>");
 		}
 		htmlSb.append("</ul></p>");
 	}
