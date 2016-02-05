@@ -263,15 +263,9 @@ public class WebCrawler {
 			ArrayList<String> allowed = getRobotURLs(allowMatch);
 			ArrayList<String> disallowed = getRobotURLs(disallowMatch);
 			for (String s : allowed) {
-				if (s.contains("*")) {
-					//allowed.remove(s);
-				}
 				downloadersPool.submit(new DownloaderTask(s, DownloaderTask.RESOURCE_TYPE_HREF, downloadersPool, analyzersPool));
 			}
 			for (String s : disallowed) {
-				if (s.contains("*")) {
-					allowed.remove(s);
-				}
 				downloadersPool.submit(new DownloaderTask(s, DownloaderTask.RESOURCE_TYPE_HREF, downloadersPool, analyzersPool));
 			}
 		}
