@@ -4,6 +4,7 @@
 public enum HTTP_CODE {
     C200_OK("200 OK"),
     ERR_400_BAD_REQUEST("400 Bad Request"),
+    ERR_403_FORBIDDEN("403 Forbidden"),
     ERR_404_NOT_FOUND("404 Not Found"),
     ERR_500_INTERNAL_SERVER_ERROR("500 Internal Server Error"),
     ERR_501_NOT_IMPLEMENTED("501 Not Implemented"),

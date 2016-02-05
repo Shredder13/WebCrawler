@@ -1,6 +1,8 @@
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -166,16 +168,11 @@ public class WebServerHttpResponse {
     	case IDLE:
 			try {
 				HashMap<String, String> getParams = request.getPostParamsMap();
-				if (getParams.containsKey("hIsFromForm")) {
-					String host = URLDecoder.decode(getParams.get("txtDomain"),"utf-8");
-					boolean portScan = getParams.get("cbPortScan") != null && getParams.get("cbPortScan").equals("on");
-					boolean disrespectRobotsTxt = getParams.get("cbDisrespectRobots") != null && getParams.get("cbDisrespectRobots").equals("on");
-					crawler.start(host, portScan, disrespectRobotsTxt);
-	    			formHolder = "Started crawler successfully!";
-				} else {
-					//TODO: 403 forbidden
-					formHolder = "USE THE FORM PLEASE";
-				}
+				String host = URLDecoder.decode(getParams.get("txtDomain"),"utf-8");
+				boolean portScan = getParams.get("cbPortScan") != null && getParams.get("cbPortScan").equals("on");
+				boolean disrespectRobotsTxt = getParams.get("cbDisrespectRobots") != null && getParams.get("cbDisrespectRobots").equals("on");
+				crawler.start(host, portScan, disrespectRobotsTxt);
+    			formHolder = "Started crawler successfully!";
 			} catch (CrawlingException | UnsupportedEncodingException e) {
 				formHolder = new String(readFile(new File("crawler_form.html")));
 				formHolder += String.format("<br>Crawler failed to start because: %s", e.getMessage());
@@ -270,7 +267,7 @@ public class WebServerHttpResponse {
      * In case the code was not 200 return error html accordingly
      * @return file to read from
      */
-    private File getFileByCode() {
+    private File getFileByCode(HTTP_CODE code) {
         File file = null;
         switch(code) {
             case ERR_501_NOT_IMPLEMENTED:
@@ -279,6 +276,9 @@ public class WebServerHttpResponse {
             case ERR_400_BAD_REQUEST:
                 file = new File(WebServer.root + "400.html");
                 break;
+            case ERR_403_FORBIDDEN:
+            	file = new File(WebServer.root + "403.html");
+            	break;
             case ERR_404_NOT_FOUND:
                 file = new File(WebServer.root + "404.html");
                 break;
@@ -363,7 +363,7 @@ public class WebServerHttpResponse {
 	        headers.put("Allow", reqMethod.methodsList());
 	    } else {
 	        // get file name by the HTTP_CODE and create a regular file response
-	        File file = getFileByCode();
+	        File file = getFileByCode(code);
 	        body = readFile(file);
 	    }
         

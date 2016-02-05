@@ -100,11 +100,19 @@ public class HTTPRequestParseUtil {
 				//If the last char of 'root' is '/', we remove it for consistency.
 				cleanRoot = root.substring(0, root.length()-1);
 			}
+			
 			File file = new File(cleanRoot + path);
 			if (!file.isFile() && !file.exists()) {
 				throw new HTTPReqErr(HTTP_CODE.ERR_404_NOT_FOUND);
 			}
-		}
+			
+			if (path.matches("\\/(.+?_\\d{8}_\\d{6}\\.html)") || path.endsWith("execResult.html")) {
+				String referer = request.getHeaders().get("referer");
+				if (!(referer != null && (referer.contains("127.0.0.1") || referer.contains("localhost")))) {
+					throw new HTTPReqErr(HTTP_CODE.ERR_403_FORBIDDEN);
+				}
+			}
+		}		
 	}
 	
 	/**
