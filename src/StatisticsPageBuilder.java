@@ -45,7 +45,7 @@ public class StatisticsPageBuilder {
 	}
 	
 	private void linkToMainPage(StringBuilder htmlSb) {
-		htmlSb.append(String.format("<p>Link to the main page: <a href src=\"http://localhost:%d/\">here</a></p>", WebServer.port));
+		htmlSb.append(String.format("<p>Link to the main page: <a href=\"http://localhost:%d/\">here</a></p>", WebServer.port));
 	}
 
 	private String getFileName() {
@@ -112,7 +112,7 @@ public class StatisticsPageBuilder {
 		for (String domain : connectedDomains) {
 			htmlSb.append("<li>").append(domain);
 			if (historyDomains.contains(domain)) {
-				htmlSb.append(String.format(" : <a href src=\"http://%s/\">%s</a>", domain, domain));
+				htmlSb.append(String.format(" : <a href=\"http://%s/\">%s</a>", domain, domain));
 			}
 			htmlSb.append("</li>");
 		}
