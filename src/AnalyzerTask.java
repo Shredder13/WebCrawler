@@ -54,7 +54,7 @@ public class AnalyzerTask extends Task {
 	private void sendToDownload(ArrayList<String> urls, int resourceType) {
 		for (String url : urls) {
 			if (!webCrawler.getVisitedUrls().contains(url)) {
-				Log.d(String.format("non-visited URL is found! send to downloader : url = %s", url));
+				Log.d(String.format("non-visited URL is found! send to downloader : url = %s", url));				
 				downloadersPool.submit(new DownloaderTask(url, resourceType, downloadersPool, analyzersPool));
 			}
 		}

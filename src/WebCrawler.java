@@ -2,7 +2,6 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,6 +14,8 @@ public class WebCrawler {
 	enum State {
 		IDLE, RUNNING
 	}
+	
+	public static int numOfImg = 0;
 	
 	public static int maxDownloaders = 10;
 	public static int maxAnalyzers = 2;
@@ -175,6 +176,7 @@ public class WebCrawler {
 			buildStatisticsPage();
 			reset();
 			Log.d("Finished crawling!");
+			System.out.println(numOfImg);
 		}
 	}
 	
