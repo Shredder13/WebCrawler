@@ -2,12 +2,13 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class WebCrawler {
@@ -15,6 +16,11 @@ public class WebCrawler {
 	enum State {
 		IDLE, RUNNING
 	}
+
+	public static final String ROBOTS = "robots.txt";
+
+	public ArrayList<Pattern> blackList = new ArrayList<>();
+	public ArrayList<Pattern> whiteList = new ArrayList<>();
 	
 	public static int maxDownloaders = 10;
 	public static int maxAnalyzers = 2;
@@ -39,14 +45,6 @@ public class WebCrawler {
 	
 	private String hostUrl;
 	
-	public static WebCrawler getInstance() {
-		if (sInstance == null) {
-			sInstance = new WebCrawler();
-		}
-		
-		return sInstance;
-	}
-	
 	private WebCrawler() {
 		downloadersPool = new ThreadPool(maxDownloaders);
 		analyzersPool = new ThreadPool(maxAnalyzers);
@@ -59,6 +57,14 @@ public class WebCrawler {
 		downloadersPool.start();
 		analyzersPool.start();
 	}
+
+	public static WebCrawler getInstance() {
+		if (sInstance == null) {
+			sInstance = new WebCrawler();
+		}
+
+		return sInstance;
+	}
 	
 	public String getHostUrl() {
 		return hostUrl;
@@ -69,6 +75,7 @@ public class WebCrawler {
 			return state;
 		}
 	}
+
 	private void setState(State s) {
 		synchronized(stateLock) {
 			Log.d("Crawler state is " + s.toString());
@@ -159,10 +166,10 @@ public class WebCrawler {
 		}
 		
 		if (disrespectRobotsTxt) {
-			//TODO: ignore in the downloader
-			crawlData.put(CrawlData.RESPECT_ROBOTS_TXT, true);
+			crawlData.put(CrawlData.DISRESPECT_ROBOTS_TXT, true);
+			handleRespectRobots();
 		}
-		
+
 		//start a downloader task for the host.
 		Log.d("Starting main downloader");
 		downloadersPool.submit(new DownloaderTask(fixedHost, DownloaderTask.RESOURCE_TYPE_HREF, downloadersPool, analyzersPool));
@@ -191,6 +198,84 @@ public class WebCrawler {
 		hostUrl = "";
 		crawlData.clear();
 		setState(State.IDLE);
+	}
+
+	/**
+	 * adds matching regexes to the list of Patterns as a pattern
+	 * @param match given matcher whose results will be added to list
+	 * @param list given list to which the results will be added
+	 */
+	private void addPatternsToList(Matcher match, ArrayList<Pattern> list) {
+		while (match.find()) {
+			String url = match.group(1).trim();
+			url = url.replace("/", "");
+			url = this.getHostUrl() + url;
+			url = url.replace("*", "+");
+			url = url.replace("?", "\\?");
+			list.add(Pattern.compile(url));
+		}
+	}
+
+	private ArrayList<String> getRobotURLs(Matcher match) {
+		ArrayList<String> urls = new ArrayList<>();
+		while (match.find()) {
+			String url = match.group(1).trim();
+			url = url.replace("/", "");
+			url = this.getHostUrl() + url;
+			urls.add(url);
+
+		}
+		return urls;
+	}
+
+	/**
+	 * gets the robots.txt file from the host and creates a while list and a black list
+	 * when crawling it will be taken into account if the urls should be surfed to by the
+	 * respect/disrespect robots user request
+	 * respect/disrespect robots user request
+	 */
+	private void handleRespectRobots() {
+		String allowReg = "allow:\\s*(.+?\\s|.+)";
+		String disallowReg = "disallow:\\s*(.+?\\s|.+)";
+		Pattern allowPattern = Pattern.compile(allowReg);
+		Pattern disallowPattern = Pattern.compile(disallowReg);
+		CrawlerHttpConnection con = new CrawlerHttpConnection(HTTP_METHOD.GET, this.getHostUrl() + ROBOTS,
+				HTTP_VERSION.HTTP_1_0);
+		String str = "";
+		try {
+			if (con.getResponse() != null) {
+				str = con.getResponse().getBody();
+				str = str.toLowerCase();
+			} else {
+				return;
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		Matcher allowMatch = allowPattern.matcher(str);
+		Matcher disallowMatch = disallowPattern.matcher(str);
+		if (!(boolean) crawlData.get(CrawlData.DISRESPECT_ROBOTS_TXT)) {
+			addPatternsToList(allowMatch, whiteList);
+			addPatternsToList(disallowMatch, blackList);
+		} else {
+			ArrayList<String> allowed = getRobotURLs(allowMatch);
+			ArrayList<String> disallowed = getRobotURLs(disallowMatch);
+			for (String s : allowed) {
+				if (s.contains("*")) {
+					//allowed.remove(s);
+				}
+				downloadersPool.submit(new DownloaderTask(s, DownloaderTask.RESOURCE_TYPE_HREF, downloadersPool, analyzersPool));
+			}
+			for (String s : disallowed) {
+				if (s.contains("*")) {
+					allowed.remove(s);
+				}
+				downloadersPool.submit(new DownloaderTask(s, DownloaderTask.RESOURCE_TYPE_HREF, downloadersPool, analyzersPool));
+			}
+		}
+
+
+
 	}
 	
 	/*public static void main(String[] args) {

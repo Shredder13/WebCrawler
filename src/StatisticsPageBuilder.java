@@ -127,7 +127,7 @@ public class StatisticsPageBuilder {
 	}
 
 	private void robots(StringBuilder htmlSb) {
-		String robots = cd.get(CrawlData.RESPECT_ROBOTS_TXT).toString();
+		String robots = cd.get(CrawlData.DISRESPECT_ROBOTS_TXT).toString();
 		htmlSb.append(String.format("<p>Respect robots.txt: %s.</p>", robots));
 	}
 }
