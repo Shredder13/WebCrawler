@@ -170,7 +170,11 @@ public class WebServerHttpResponse {
 					String host = URLDecoder.decode(getParams.get("txtDomain"),"utf-8");
 					boolean portScan = getParams.get("cbPortScan") != null && getParams.get("cbPortScan").equals("on");
 					boolean disrespectRobotsTxt = getParams.get("cbDisrespectRobots") != null && getParams.get("cbDisrespectRobots").equals("on");
-					crawler.start(host, portScan, disrespectRobotsTxt);
+                    String email = getParams.get("txtMail");
+                    if (email != null) {
+                        crawler.setEmail(URLDecoder.decode(email, "utf-8"));
+                    }
+                    crawler.start(host, portScan, disrespectRobotsTxt);
 	    			formHolder = "Started crawler successfully!";
 				} else {
 					//TODO: 403 forbidden

@@ -46,6 +46,7 @@ public class WebCrawler {
 	private CrawlData crawlData;
 	
 	private String hostUrl;
+	private String email = "";
 	
 	private WebCrawler() {
 		downloadersPool = new ThreadPool(maxDownloaders);
@@ -83,6 +84,10 @@ public class WebCrawler {
 			Log.d("Crawler state is " + s.toString());
 			state = s;
 		}
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
 	}
 	
 	public CrawlData getCrawlData() {
@@ -184,8 +189,13 @@ public class WebCrawler {
 			buildStatisticsPage();
 			reset();
 			Log.d("Finished crawling!");
+			sendEmail();
 			System.out.println(numOfImg);
 		}
+	}
+
+	private void sendEmail() {
+		// TODO: complete
 	}
 	
 	private void buildStatisticsPage() {
