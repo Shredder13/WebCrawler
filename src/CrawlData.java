@@ -4,7 +4,7 @@ import java.util.HashSet;
 public class CrawlData {
 
 	public static final String OPENNED_PORTS = "OPENNED_PORTS";
-	public static final String RESPECT_ROBOTS_TXT = "RESPECT_ROBOTS_TXT";
+	public static final String DISRESPECT_ROBOTS_TXT = "DISRESPECT_ROBOTS_TXT";
 	public static final String NUM_OF_IMAGES = "NUM_OF_IMAGES";
 	public static final String SIZE_OF_IMAGES = "SIZE_OF_IMAGES";
 	public static final String NUM_OF_VIDEOS = "NUM_OF_VIDEOS";
@@ -32,7 +32,7 @@ public class CrawlData {
 	}
 	
 	private void init() {
-		data.put(RESPECT_ROBOTS_TXT, false);
+		data.put(DISRESPECT_ROBOTS_TXT, false);
 		data.put(NUM_OF_IMAGES, 0L);
 		data.put(SIZE_OF_IMAGES, 0L);
 		data.put(NUM_OF_VIDEOS, 0L);
