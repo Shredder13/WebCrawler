@@ -39,6 +39,11 @@ public class DownloaderTask extends Task {
 
 			//check if external or internal link
 			boolean internal = false;
+			
+			if (url.contains("allaboutcookies")) {
+				int a = 3;
+				a++;
+			}
 
 			HttpUrl urlObj = new HttpUrl(url);
 			HttpUrl origUrlObj = new HttpUrl(webCrawler.getHostUrl());

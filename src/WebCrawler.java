@@ -22,6 +22,8 @@ public class WebCrawler {
 	public ArrayList<Pattern> blackList = new ArrayList<>();
 	public ArrayList<Pattern> whiteList = new ArrayList<>();
 	
+	public static int numOfImg = 0;
+	
 	public static int maxDownloaders = 10;
 	public static int maxAnalyzers = 2;
 	public static ArrayList<String> imageExtensions = new ArrayList<>();
@@ -182,6 +184,7 @@ public class WebCrawler {
 			buildStatisticsPage();
 			reset();
 			Log.d("Finished crawling!");
+			System.out.println(numOfImg);
 		}
 	}
 	

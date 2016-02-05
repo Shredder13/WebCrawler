@@ -33,8 +33,29 @@ public class HtmlParser {
 		absServerPath = parseUrl(url);
 	}
 	
+	//TODO: delete this
+	private int findNumOfImg() {
+		String findStr = "<img";
+		int lastIndex = 0;
+		int count = 0;
+
+		while(lastIndex != -1){
+
+		    lastIndex = html.indexOf(findStr,lastIndex);
+
+		    if(lastIndex != -1){
+		        count ++;
+		        lastIndex += findStr.length();
+		    }
+		}
+		
+		return count;
+	}
+	
 	public void parse() {
 		String regex = buildRegex();
+		
+		WebCrawler.numOfImg += findNumOfImg();
 		
 		Pattern p = Pattern.compile(regex);
 		Matcher m = p.matcher(html);
@@ -59,6 +80,7 @@ public class HtmlParser {
 					if (sulamitStart != -1) {
 						hrefLink = hrefLink.substring(0, sulamitStart);
 					}
+					
 					addResourceToList(hrefLink, links);
 				}
 			} catch (IllegalArgumentException e) {
@@ -80,8 +102,12 @@ public class HtmlParser {
 		}
 	}
 	
-	private void addResourceToList(String resPath, ArrayList<String> resList) {
+	private void addResourceToList(String resPath, ArrayList<String> resList) {		
+		
 		resPath = makeAbsolutePath(resPath);
+		if (resPath.contains("..")) {
+			resPath = removeDouleDots(resPath);
+		}
 		
 		if (!resList.contains(resPath)) {
 			resList.add(resPath);
@@ -89,9 +115,45 @@ public class HtmlParser {
 	}
 	
 	/**
+	 * Removing the double dots (up-folder). Fix url with the form of
+	 * http://www.website.com/folder/../another_folder/../page.html
+	 * @param resPath
+	 * @return for the example above, it returns http://www.website.com/page.html
+	 */
+	private String removeDouleDots(String resPath) {
+		String[] urlPartsArr = resPath.split("/");
+		
+		ArrayList<String> resultUrlParts = new ArrayList<>();
+		
+		//For each url parts - if its ".." we delete the last url-part from the result list,
+		//otherwise we add the url part.
+		for (int i=0; i<urlPartsArr.length; i++) {
+			if (urlPartsArr[i].equals("..")) {
+				resultUrlParts.remove(i-1);
+			} else {
+				resultUrlParts.add(urlPartsArr[i]);
+			}
+		}
+		
+		StringBuilder result = new StringBuilder();
+		for (int i=0; i<resultUrlParts.size(); i++) {
+			
+			result.append(resultUrlParts.get(i));
+			
+			if (i != resultUrlParts.size() - 1) {
+				result.append("/");
+			} else if (resPath.endsWith("/")){
+				result.append("/");
+			}
+		}
+		
+		return result.toString();
+	}
+
+	/**
 	 * 
 	 * @return regex in the form<br>
-	 * ["'](.+\.((bmp|jpg|png|gif|ico)|(avi|mpg|mp4|wmv|mov|flv|swf|mkv)|(pdf|doc|docx|xls|xlsx|ppt|pptx)))["']|(a href="(.+?)")
+	 * ["'](.+\.((bmp|jpg|png|gif|ico)|(avi|mpg|mp4|wmv|mov|flv|swf|mkv)|(pdf|doc|docx|xls|xlsx|ppt|pptx)))["']|(a\s*href\s*=\s*"(.+?)")
 	 * <br>
 	 * group #1 - if not empty, it is a file with one of the extensions.<br>
 	 * group #2 - indicates the extension.<br>
@@ -109,7 +171,7 @@ public class HtmlParser {
 		addExtToRegex(videoExts, regexSB);
 		regexSB.append("|");
 		addExtToRegex(docExts, regexSB);
-		regexSB.append("))[\"']|(a href=[\"'](.+?)[\"'])");
+		regexSB.append("))[\"']|(a\\s*href\\s*=\\s*[\"'](.+?)[\"'])");
 		
 		return regexSB.toString();
 	}
@@ -144,7 +206,7 @@ public class HtmlParser {
 		if (src.startsWith("/")) {
 			result = absServerPath + src;
 		} else if (!src.matches("^(http|https)://.+")) {
-			//if the source starts with something different than http(s)://
+			//if the source starts with something different than http://
 			result =  absServerPath + "/" + src;
 		} else {
 			result = src;

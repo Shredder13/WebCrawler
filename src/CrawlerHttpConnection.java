@@ -87,6 +87,8 @@ public class CrawlerHttpConnection {
 		StringBuilder reqSb = new StringBuilder();
 		reqSb.append(String.format("%s %s %s", method.toString(), path, version.toString()));
 		reqSb.append(WebServer.CRLF);
+		reqSb.append(String.format("host: %s", host));
+		reqSb.append(WebServer.CRLF);
 		
 		BufferedWriter socketOutputStream = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 		reqSb.append(WebServer.CRLF);
