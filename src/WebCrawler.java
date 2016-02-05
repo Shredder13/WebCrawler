@@ -166,11 +166,11 @@ public class WebCrawler {
 				e.printStackTrace();
 			}
 		}
-		
+
 		if (disrespectRobotsTxt) {
 			crawlData.put(CrawlData.DISRESPECT_ROBOTS_TXT, true);
-			handleRespectRobots();
 		}
+		handleRespectRobots();
 
 		//start a downloader task for the host.
 		Log.d("Starting main downloader");
@@ -238,8 +238,8 @@ public class WebCrawler {
 	 * respect/disrespect robots user request
 	 */
 	private void handleRespectRobots() {
-		String allowReg = "allow:\\s*(.+?\\s|.+)";
-		String disallowReg = "disallow:\\s*(.+?\\s|.+)";
+		String allowReg = "Allow:\\s*(.+?\\s|.+)";
+		String disallowReg = "Disallow:\\s*(.+?\\s|.+)";
 		Pattern allowPattern = Pattern.compile(allowReg);
 		Pattern disallowPattern = Pattern.compile(disallowReg);
 		CrawlerHttpConnection con = new CrawlerHttpConnection(HTTP_METHOD.GET, this.getHostUrl() + ROBOTS,
@@ -248,7 +248,6 @@ public class WebCrawler {
 		try {
 			if (con.getResponse() != null) {
 				str = con.getResponse().getBody();
-				str = str.toLowerCase();
 			} else {
 				return;
 			}
