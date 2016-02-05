@@ -28,7 +28,7 @@ public class DownloaderTask extends Task {
 		this.url = url;
 		webCrawler = WebCrawler.getInstance();
 
-		increaseNumOfAnalyzersAlive();
+		increaseNumOfDownloadersAlive();
 	}
 
 	@Override
@@ -117,7 +117,7 @@ public class DownloaderTask extends Task {
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-			decreaseNumOfAnalyzersAlive();
+			decreaseNumOfDownloadersAlive();
 		}
 	}
 
@@ -127,14 +127,15 @@ public class DownloaderTask extends Task {
 
 	}
 
-	private void increaseNumOfAnalyzersAlive() {
+	private void increaseNumOfDownloadersAlive() {
 		synchronized (numDownloadersAliveLock) {
 			numDownloadersAlive++;
 		}
 	}
-	private void decreaseNumOfAnalyzersAlive() {
+	private void decreaseNumOfDownloadersAlive() {
 		synchronized (numDownloadersAliveLock) {
 			numDownloadersAlive--;
+			Log.d("remaining items in Downloaders queue: " + numDownloadersAlive);
 			webCrawler.checkIfFinished();
 		}
 	}

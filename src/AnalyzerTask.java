@@ -74,6 +74,7 @@ public class AnalyzerTask extends Task {
 	private void decreaseNumOfAnalyzersAlive() {
 		synchronized (numAnalyzersAliveLock) {
 			numAnalyzersAlive--;
+			Log.d("remaining items in Analyzers queue: " + numAnalyzersAlive);
 			webCrawler.checkIfFinished();
 		}
 	}
