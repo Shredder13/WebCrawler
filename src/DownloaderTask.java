@@ -147,20 +147,28 @@ public class DownloaderTask extends Task {
 
 	/**
 	 * checks if we need to respect the robots.txt
-	 * @param cd
-	 * @return
+	 * @param cd the crawl data for this crawl
+	 * @param url url to be checked if should be crawled
+	 * @return true if we shouldn't crawl to the given url, false otherwise
      */
 	private boolean checkLists(CrawlData cd, String url) {
 		// check in black and white lists according to dis/respect robots
-		if ((boolean) cd.get(CrawlData.DISRESPECT_ROBOTS_TXT)) {
-			for (Pattern p : webCrawler.blackList) {
+		if (!(boolean) cd.get(CrawlData.DISRESPECT_ROBOTS_TXT)) {
+			// check if in whitelist and whould be crawled
+			for (Pattern p : webCrawler.whiteList) {
 				Matcher matcher = p.matcher(url);
-				if (matcher.find()) {
+				if (matcher.matches()) {
+					Log.d("Should crawl into " + url + " (Allow in robots.txt).");
+					return false;
+				}
+			}
+			// not on whitelist, check if in blacklist- shouldn't be crawled
+			for (Pattern p : webCrawler.blackList) {
+				if (url.startsWith(p.toString())) {
+					Log.d("Should not crawl into " + url + " (robots.txt).");
 					return true;
 				}
 			}
-		} else {
-			return false;
 		}
 		return false;
 	}
