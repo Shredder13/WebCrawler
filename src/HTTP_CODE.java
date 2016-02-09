@@ -3,6 +3,7 @@
  */
 public enum HTTP_CODE {
     C200_OK("200 OK"),
+    ERR_301_MOVED_PERMANENTLY("301 Moved Permanently"),
     ERR_400_BAD_REQUEST("400 Bad Request"),
     ERR_403_FORBIDDEN("403 Forbidden"),
     ERR_404_NOT_FOUND("404 Not Found"),
@@ -21,5 +22,15 @@ public enum HTTP_CODE {
 
     public String toString() {
         return this.code;
+    }
+    
+    public static HTTP_CODE fromString(String codeStr) {
+    	for (int i=0 ; i < HTTP_CODE.values().length; i++) {
+    		if (HTTP_CODE.values()[i].code.equals(codeStr)) {
+    			return HTTP_CODE.values()[i];
+    		}
+    	}
+    	
+    	return null;
     }
 }

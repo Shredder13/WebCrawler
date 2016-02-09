@@ -55,8 +55,6 @@ public class HtmlParser {
 	public void parse() {
 		String regex = buildRegex();
 		
-		WebCrawler.numOfImg += findNumOfImg();
-		
 		Pattern p = Pattern.compile(regex);
 		Matcher m = p.matcher(html);
 		while(m.find()) {
@@ -155,7 +153,7 @@ public class HtmlParser {
 	/**
 	 * 
 	 * @return regex in the form<br>
-	 * ["'](.+\.((bmp|jpg|png|gif|ico)|(avi|mpg|mp4|wmv|mov|flv|swf|mkv)|(pdf|doc|docx|xls|xlsx|ppt|pptx)))["']|(a\s*href\s*=\s*"(.+?)")
+	 * ["']([^"']+\.((bmp|jpg|png|gif|ico)|(avi|mpg|mp4|wmv|mov|flv|swf|mkv)|(pdf|doc|docx|xls|xlsx|ppt|pptx)))["']|(a\s*href\s*=\s*"(.+?)")
 	 * <br>
 	 * group #1 - if not empty, it is a file with one of the extensions.<br>
 	 * group #2 - indicates the extension.<br>
@@ -166,7 +164,7 @@ public class HtmlParser {
 	 * group #7 - this is the link content of group #6.
 	 */
 	private String buildRegex() {
-		StringBuilder regexSB = new StringBuilder("[\"'](.+\\.(");
+		StringBuilder regexSB = new StringBuilder("[\"']([^\"']+\\.(");
 		
 		addExtToRegex(imgExts, regexSB);
 		regexSB.append("|");

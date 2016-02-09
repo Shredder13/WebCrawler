@@ -3,3 +3,5 @@
 - Multi-threaded port scanner, for scanning fast.
 
 - handling URLs that has ".." in their path, such as http://www.website.com/folder/../index.html
+
+- handling 301 moved sites.

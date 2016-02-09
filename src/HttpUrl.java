@@ -24,7 +24,13 @@ public class HttpUrl {
 			if (portStr != null && portStr.length() > 0) {
 				port = Integer.valueOf(portStr);
 			} else {
-				port = -1;
+				if (protocol.equals("http")) {
+					port = 80;
+				} else if (protocol.equals("https")) {
+					port = 443;
+				} else {
+					port = -1;
+				}
 			}
 			
 			file = m.group(5);
@@ -58,6 +64,20 @@ public class HttpUrl {
 
 	public String getFile() {
 		return file;
+	}
+	public void setFile(String newFile) {
+		if (!newFile.startsWith("/")) {
+			newFile = "/" + newFile;
+		}
+		
+		file = newFile;
+	}
+	
+	@Override
+	public String toString() {
+		int p = port;
+		if (p == -1) p = 80;
+		return String.format("%s://%s:%d%s", protocol, host, port, file);
 	}
 	
 	public static void main(String[] args) {

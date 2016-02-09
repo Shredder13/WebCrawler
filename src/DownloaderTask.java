@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -63,32 +64,41 @@ public class DownloaderTask extends Task {
 
 
 			if (resourceType == RESOURCE_TYPE_HREF) {
+				Log.d(String.format("Resource is a HTML : url = %s", url));
 				conn = new CrawlerHttpConnection(HTTP_METHOD.GET, url, HTTP_VERSION.HTTP_1_0);
 				response = conn.getResponse();
 				conn.close();
 
-				//TODO: Remove the C200_OK part when doing the 302 bonus!
-				if (response != null && response.getCode() == HTTP_CODE.C200_OK) {
-					Log.d(String.format("Resource is a HTML : url = %s", url));
-					if (internal) {
-						Log.d(String.format("HTML is internal! send to analyzer : url = %s", url));
-						cd.put(CrawlData.NUM_OF_INTERNAL_LINKS, (Long)cd.get(CrawlData.NUM_OF_INTERNAL_LINKS) + 1);
-						analyzersPool.submit(new AnalyzerTask(url, response.getBody(), downloadersPool, analyzersPool));
-					} else {
-						cd.put(CrawlData.NUM_OF_EXTERNAL_LINKS, (Long)cd.get(CrawlData.NUM_OF_EXTERNAL_LINKS) + 1);
-						((HashSet<String>) cd.get(CrawlData.CONNECTED_DOMAINS)).add(urlObj.getHost());
-						//TODO: WTF is "link of crawled domains"...?
-					}
+				if (response != null) {
+					switch(response.getCode()) {
+					case ERR_301_MOVED_PERMANENTLY:
+						handle301Moved(response);
+						break;
+					default:
+					case C200_OK:
+						if (internal) {
+							Log.d(String.format("HTML is internal! send to analyzer : url = %s", url));
+							cd.put(CrawlData.NUM_OF_INTERNAL_LINKS, (Long)cd.get(CrawlData.NUM_OF_INTERNAL_LINKS) + 1);
+							analyzersPool.submit(new AnalyzerTask(url, response.getBody(), downloadersPool, analyzersPool));
+						} else {
+							cd.put(CrawlData.NUM_OF_EXTERNAL_LINKS, (Long)cd.get(CrawlData.NUM_OF_EXTERNAL_LINKS) + 1);
+							((HashSet<String>) cd.get(CrawlData.CONNECTED_DOMAINS)).add(urlObj.getHost());
+							//TODO: WTF is "link of crawled domains"...?
+						}
 
-					cd.put(CrawlData.NUM_OF_PAGES, (Long)cd.get(CrawlData.NUM_OF_PAGES) + 1);
-					cd.put(CrawlData.SIZE_OF_PAGES, (Long)cd.get(CrawlData.SIZE_OF_PAGES) + Long.valueOf(response.getHeaders().get("content-length")));
+						cd.put(CrawlData.NUM_OF_PAGES, (Long)cd.get(CrawlData.NUM_OF_PAGES) + 1);
+						cd.put(CrawlData.SIZE_OF_PAGES, (Long)cd.get(CrawlData.SIZE_OF_PAGES) + Long.valueOf(response.getHeaders().get("content-length")));
+						break;
+					}
+					
 				}
+				
 			} else {
 
 				conn = new CrawlerHttpConnection(HTTP_METHOD.HEAD, url, HTTP_VERSION.HTTP_1_0);
 				response = conn.getResponse();
 				conn.close();
-
+				System.out.println("BLAT 1");
 				if (response != null && response.getCode() == HTTP_CODE.C200_OK) {
 					Log.d(String.format("Resource is a BLOB : url = %s", url));
 
@@ -120,6 +130,23 @@ public class DownloaderTask extends Task {
 			decreaseNumOfDownloadersAlive();
 		}
 	}
+	
+	private void handle301Moved(CrawlerHttpConnection.Response response) throws MalformedURLException {
+		String movedUrl = response.getHeaders().get("location");
+		Log.d("Moved permanently to " + movedUrl);
+		if (movedUrl != null) {
+			String newUrl;
+			if (movedUrl.matches("^https?:\\/\\/.+")) {
+				newUrl = movedUrl;
+			} else {
+				HttpUrl movedUrlObj = new HttpUrl(url);
+				movedUrlObj.setFile(movedUrl);
+				newUrl = movedUrlObj.toString();
+			}
+			
+			downloadersPool.submit(new DownloaderTask(newUrl, RESOURCE_TYPE_HREF, downloadersPool, analyzersPool));
+		}
+	}
 
 	@Override
 	protected void shutdown() throws IOException {
@@ -128,16 +155,20 @@ public class DownloaderTask extends Task {
 	}
 
 	private void increaseNumOfDownloadersAlive() {
+		Log.d("BLAT deccrease IN");
 		synchronized (numDownloadersAliveLock) {
 			numDownloadersAlive++;
 		}
+		Log.d("BLAT deccrease OUT");
 	}
 	private void decreaseNumOfDownloadersAlive() {
+		Log.d("BLAT increase IN");
 		synchronized (numDownloadersAliveLock) {
 			numDownloadersAlive--;
 			Log.d("remaining items in Downloaders queue: " + numDownloadersAlive);
 			webCrawler.checkIfFinished();
 		}
+		Log.d("BLAT increase OUT");
 	}
 
 	public static int getNumOfDownloadersAlive() {

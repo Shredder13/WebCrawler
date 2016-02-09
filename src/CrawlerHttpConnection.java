@@ -89,6 +89,8 @@ public class CrawlerHttpConnection {
 		reqSb.append(WebServer.CRLF);
 		reqSb.append(String.format("host: %s", host));
 		reqSb.append(WebServer.CRLF);
+		reqSb.append("referer: 127.0.0.1");
+		reqSb.append(WebServer.CRLF);
 		
 		BufferedWriter socketOutputStream = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 		reqSb.append(WebServer.CRLF);
@@ -110,7 +112,7 @@ public class CrawlerHttpConnection {
 		while(!(line = reader.readCRLFLine()).equals(WebServer.CRLF)) {
 			headersList.add(line);
 		}
-		boolean resHeadersOk = validateResponseHeaders(headersList);
+		fillResponseHeaders(headersList);
 		
 		//read body, if has any.
 		if (response.headers.containsKey("content-length")) {
@@ -126,11 +128,11 @@ public class CrawlerHttpConnection {
 			response.headers.put("content-length", String.valueOf(response.body.length()));
 		}
 		
-		return resLineOk && resHeadersOk;
+		return resLineOk;
 	}
 
 	private boolean validateResponseLine(String resLine) {
-		Pattern p = Pattern.compile("^(HTTP\\/1\\.1|HTTP\\/1\\.0) ([0-9]+ \\w+)$");
+		Pattern p = Pattern.compile("^(HTTP\\/1\\.1|HTTP\\/1\\.0) ([0-9]+ \\w[\\w\\s]*)$");
 		Matcher m = p.matcher(resLine);
 		if (m.matches()) {
 			String httpVersion = m.group(1);
@@ -138,11 +140,12 @@ public class CrawlerHttpConnection {
 			
 			boolean httpVerOk = httpVersion != null && (httpVersion.equals(HTTP_VERSION.HTTP_1_0.toString())
 														|| httpVersion.equals(HTTP_VERSION.HTTP_1_1.toString()));
-			boolean httpCodeOk = httpCode != null && httpCode.equals(HTTP_CODE.C200_OK.toString());
+			boolean httpCodeOk = httpCode != null && (httpCode.equals(HTTP_CODE.C200_OK.toString())
+														|| httpCode.equals(HTTP_CODE.ERR_301_MOVED_PERMANENTLY.toString()));
 			
 			if (httpVerOk && httpCodeOk) {
 				response.version = HTTP_VERSION.fromString(httpVersion);
-				response.code = HTTP_CODE.C200_OK;
+				response.code = HTTP_CODE.fromString(httpCode);
 				return true;
 			}
 		}
@@ -150,11 +153,11 @@ public class CrawlerHttpConnection {
 		return false;
 	}
 	
-	private boolean validateResponseHeaders(List<String> headersList) {
+	private void fillResponseHeaders(List<String> headersList) {
 		Pattern pattern = Pattern.compile("^([^ ]+): ?(.+)\\r\\n$");
 		
-		boolean hasContentLength = false;
-		boolean hasContentType = false;
+		//boolean hasContentLength = false;
+		//boolean hasContentType = false;
 		
 		for (String s : headersList) {
 			Matcher matcher = pattern.matcher(s); 
@@ -163,14 +166,14 @@ public class CrawlerHttpConnection {
 				String value = matcher.group(2).toLowerCase();
 				
 				if (key != null && value != null) {
-					if (!hasContentLength) hasContentLength = key.equals("content-length");
-					if (!hasContentType) hasContentType = key.equals("content-type");
+					//if (!hasContentLength) hasContentLength = key.equals("content-length");
+					//if (!hasContentType) hasContentType = key.equals("content-type");
 					response.headers.put(key, value);
 				}
 			}
 		}
 		
-		return /*hasContentLength &&*/ hasContentType;
+		//return /*hasContentLength &&*/ hasContentType;
 	}
 	
 	public class Response {
