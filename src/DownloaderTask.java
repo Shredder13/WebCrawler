@@ -4,6 +4,10 @@ import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * DownlaoderTask is a task that is account of downloading link content by sending
+ * GET or HEAD methods.
+ */
 public class DownloaderTask extends Task {
 
 	public static final int RESOURCE_TYPE_HREF = 0;
@@ -18,6 +22,9 @@ public class DownloaderTask extends Task {
 	private String url;
 
 	WebCrawler webCrawler;
+	
+	CrawlerHttpConnection conn;
+	CrawlerHttpConnection.Response response;
 
 	private static int numDownloadersAlive = 0;
 	private static final Object numDownloadersAliveLock = new Object();
@@ -29,9 +36,16 @@ public class DownloaderTask extends Task {
 		this.url = url;
 		webCrawler = WebCrawler.getInstance();
 
+		//Increasing the number of active downloaders here, before the task is queued in the downloadersPool,
+		//makes sure that the AnalyzerTask that triggered this task isn't finished yet and also the downloaders counter is not 0.
+		//It actually eliminates the chance that that both downloadersPool and analyzersPool are empty at the 
+		//same time when there's job to be done.
 		increaseNumOfDownloadersAlive();
 	}
 
+	/**
+	 * Perform the URL download using GET for href and HEAD for blobs.
+	 */
 	@Override
 	public void run() {
 
@@ -44,8 +58,11 @@ public class DownloaderTask extends Task {
 			HttpUrl urlObj = new HttpUrl(url);
 			HttpUrl origUrlObj = new HttpUrl(webCrawler.getHostUrl());
 			internal = urlObj.getHost().equals(origUrlObj.getHost());
+			
+			//Here the crawling statistics is aggregated
 			CrawlData cd = webCrawler.getCrawlData();
 
+			//check against robots.txt
 			if (checkLists(cd, url)) {
 				return;
 			}
@@ -57,14 +74,13 @@ public class DownloaderTask extends Task {
 				Log.d(String.format("Url not yet visited! processing further : url = %s", url));
 				webCrawler.addVisitedURL(url);
 			}
-
-			CrawlerHttpConnection conn;
-			CrawlerHttpConnection.Response response;
-
-
-
+			
+			//If it is an HREF link, we download it using the GET method and send it to an analyzer.
+			//BONUS: if the response is "301 moved permanently" we redirect the crawl to that page. 
 			if (resourceType == RESOURCE_TYPE_HREF) {
 				Log.d(String.format("Resource is a HTML : url = %s", url));
+				
+				//Send GET request
 				conn = new CrawlerHttpConnection(HTTP_METHOD.GET, url, HTTP_VERSION.HTTP_1_0);
 				response = conn.getResponse();
 				conn.close();
@@ -76,14 +92,16 @@ public class DownloaderTask extends Task {
 						break;
 					default:
 					case C200_OK:
+						//Handle internal / external links
 						if (internal) {
 							Log.d(String.format("HTML is internal! send to analyzer : url = %s", url));
 							cd.put(CrawlData.NUM_OF_INTERNAL_LINKS, (Long)cd.get(CrawlData.NUM_OF_INTERNAL_LINKS) + 1);
+							
+							//Send internal HREFs to an analyzer.
 							analyzersPool.submit(new AnalyzerTask(url, response.getBody(), downloadersPool, analyzersPool));
 						} else {
 							cd.put(CrawlData.NUM_OF_EXTERNAL_LINKS, (Long)cd.get(CrawlData.NUM_OF_EXTERNAL_LINKS) + 1);
 							((HashSet<String>) cd.get(CrawlData.CONNECTED_DOMAINS)).add(urlObj.getHost());
-							//TODO: WTF is "link of crawled domains"...?
 						}
 
 						cd.put(CrawlData.NUM_OF_PAGES, (Long)cd.get(CrawlData.NUM_OF_PAGES) + 1);
@@ -94,29 +112,38 @@ public class DownloaderTask extends Task {
 				}
 				
 			} else {
-
+				//If its an image, video or document - we send a HEAD request.
 				conn = new CrawlerHttpConnection(HTTP_METHOD.HEAD, url, HTTP_VERSION.HTTP_1_0);
 				response = conn.getResponse();
 				conn.close();
-				System.out.println("BLAT 1");
-				if (response != null && response.getCode() == HTTP_CODE.C200_OK) {
+				if (response != null) {
 					Log.d(String.format("Resource is a BLOB : url = %s", url));
-
-					if (response.getHeaders().containsKey("content-length")) {
-						switch(resourceType) {
-						case RESOURCE_TYPE_IMG:
-							cd.put(CrawlData.NUM_OF_IMAGES, (Long)cd.get(CrawlData.NUM_OF_IMAGES) + 1);
-							cd.put(CrawlData.SIZE_OF_IMAGES, (Long)cd.get(CrawlData.SIZE_OF_IMAGES) + Long.valueOf(response.getHeaders().get("content-length")));
-							break;
-						case RESOURCE_TYPE_VIDEO:
-							cd.put(CrawlData.NUM_OF_VIDEOS, (Long)cd.get(CrawlData.NUM_OF_VIDEOS) + 1);
-							cd.put(CrawlData.SIZE_OF_VIDEOS, (Long)cd.get(CrawlData.SIZE_OF_VIDEOS) + Long.valueOf(response.getHeaders().get("content-length")));
-							break;
-						case RESOURCE_TYPE_DOC:
-							cd.put(CrawlData.NUM_OF_DOCUMENTS, (Long)cd.get(CrawlData.NUM_OF_DOCUMENTS) + 1);
-							cd.put(CrawlData.SIZE_OF_DOCUMENTS, (Long)cd.get(CrawlData.SIZE_OF_DOCUMENTS) + Long.valueOf(response.getHeaders().get("content-length")));
-							break;
+					
+					switch(response.getCode()) {
+					case ERR_301_MOVED_PERMANENTLY:
+						//BONUS: handle "301 moved permanently" for images
+						handle301Moved(response);
+						break;
+					default:
+					case C200_OK:
+						//Fill in the crawling statistics
+						if (response.getHeaders().containsKey("content-length")) {
+							switch(resourceType) {
+							case RESOURCE_TYPE_IMG:
+								cd.put(CrawlData.NUM_OF_IMAGES, (Long)cd.get(CrawlData.NUM_OF_IMAGES) + 1);
+								cd.put(CrawlData.SIZE_OF_IMAGES, (Long)cd.get(CrawlData.SIZE_OF_IMAGES) + Long.valueOf(response.getHeaders().get("content-length")));
+								break;
+							case RESOURCE_TYPE_VIDEO:
+								cd.put(CrawlData.NUM_OF_VIDEOS, (Long)cd.get(CrawlData.NUM_OF_VIDEOS) + 1);
+								cd.put(CrawlData.SIZE_OF_VIDEOS, (Long)cd.get(CrawlData.SIZE_OF_VIDEOS) + Long.valueOf(response.getHeaders().get("content-length")));
+								break;
+							case RESOURCE_TYPE_DOC:
+								cd.put(CrawlData.NUM_OF_DOCUMENTS, (Long)cd.get(CrawlData.NUM_OF_DOCUMENTS) + 1);
+								cd.put(CrawlData.SIZE_OF_DOCUMENTS, (Long)cd.get(CrawlData.SIZE_OF_DOCUMENTS) + Long.valueOf(response.getHeaders().get("content-length")));
+								break;
+							}
 						}
+						break;
 					}
 				}
 			}
@@ -127,48 +154,55 @@ public class DownloaderTask extends Task {
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
+			if (conn != null) {
+				conn.close();
+			}
 			decreaseNumOfDownloadersAlive();
 		}
 	}
 	
+	/**
+	 * Handle the case when receiveing 301 MOVED PERMANENTLY when requesting a resource.
+	 * @param response the response object for the request
+	 * @throws MalformedURLException if the move URL is incorrect.
+	 */
 	private void handle301Moved(CrawlerHttpConnection.Response response) throws MalformedURLException {
 		String movedUrl = response.getHeaders().get("location");
 		Log.d("Moved permanently to " + movedUrl);
 		if (movedUrl != null) {
 			String newUrl;
 			if (movedUrl.matches("^https?:\\/\\/.+")) {
+				//If the link starts with "http(s)"
 				newUrl = movedUrl;
 			} else {
+				//If the link starts with a local path we just change it
 				HttpUrl movedUrlObj = new HttpUrl(url);
 				movedUrlObj.setFile(movedUrl);
 				newUrl = movedUrlObj.toString();
 			}
 			
-			downloadersPool.submit(new DownloaderTask(newUrl, RESOURCE_TYPE_HREF, downloadersPool, analyzersPool));
+			downloadersPool.submit(new DownloaderTask(newUrl, resourceType, downloadersPool, analyzersPool));
 		}
 	}
 
 	@Override
 	protected void shutdown() throws IOException {
-		// TODO Auto-generated method stub
-
+		if (conn != null) {
+			conn.close();
+		}
 	}
 
 	private void increaseNumOfDownloadersAlive() {
-		Log.d("BLAT deccrease IN");
 		synchronized (numDownloadersAliveLock) {
 			numDownloadersAlive++;
 		}
-		Log.d("BLAT deccrease OUT");
 	}
 	private void decreaseNumOfDownloadersAlive() {
-		Log.d("BLAT increase IN");
 		synchronized (numDownloadersAliveLock) {
 			numDownloadersAlive--;
 			Log.d("remaining items in Downloaders queue: " + numDownloadersAlive);
 			webCrawler.checkIfFinished();
 		}
-		Log.d("BLAT increase OUT");
 	}
 
 	public static int getNumOfDownloadersAlive() {

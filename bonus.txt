@@ -4,4 +4,4 @@
 
 - handling URLs that has ".." in their path, such as http://www.website.com/folder/../index.html
 
-- handling 301 moved sites.
+- handling "301 moved permanently" responses from crawled websites.

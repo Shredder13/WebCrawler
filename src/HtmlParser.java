@@ -3,17 +3,23 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
+/**
+ * HtmlParser extracts the relevant resources' links from a given HTML text.
+ */
 public class HtmlParser {
 	
-	private String html;	
+	private String html;
+	
+	//links that refer only to a local file are being completed to absolute (including http).
 	private String absServerPath;
 	
+	//Output lists
 	private ArrayList<String> images;
 	private ArrayList<String> videos;
 	private ArrayList<String> docs;
 	private ArrayList<String> links;
 	
+	//non-href extensions.
 	private ArrayList<String> imgExts;
 	private ArrayList<String> videoExts;
 	private ArrayList<String> docExts;
@@ -33,31 +39,19 @@ public class HtmlParser {
 		absServerPath = parseUrl(url);
 	}
 	
-	//TODO: delete this
-	private int findNumOfImg() {
-		String findStr = "<img";
-		int lastIndex = 0;
-		int count = 0;
-
-		while(lastIndex != -1){
-
-		    lastIndex = html.indexOf(findStr,lastIndex);
-
-		    if(lastIndex != -1){
-		        count ++;
-		        lastIndex += findStr.length();
-		    }
-		}
-		
-		return count;
-	}
-	
+	/**
+	 * Parsing the HTML using a regex, for extracting links and fill the output lists.
+	 */
 	public void parse() {
+		//build the regex dynamically according to config.ini (the extensions lists).
 		String regex = buildRegex();
 		
 		Pattern p = Pattern.compile(regex);
 		Matcher m = p.matcher(html);
 		while(m.find()) {
+			//For every match, we classify it according to it's extension.
+			//BONUS: that allows us to extract links that aren't bounded to HTML tags,
+			//such as in javascripts.
 			try {
 				String resourcePath = m.group(1);
 				String imgExt = m.group(3);
@@ -76,6 +70,7 @@ public class HtmlParser {
 				} else if (hrefLink != null) {
 					int sulamitStart = hrefLink.indexOf('#');
 					if (sulamitStart != -1) {
+						//If sulamit is found, we consider it as link without it.
 						hrefLink = hrefLink.substring(0, sulamitStart);
 					}
 					
@@ -100,9 +95,19 @@ public class HtmlParser {
 		}
 	}
 	
+	/**
+	 * When a link is found it sometimes has to go thorugh some modifications.
+	 * The modifications are making the link absolute (to include http & domain),
+	 * and also handling dots in the path that point to parent / current folders
+	 * (such as "/../" or "/./").
+	 * @param resPath - the resource path
+	 * @param resList - the relevant resource list for the resource.
+	 */
 	private void addResourceToList(String resPath, ArrayList<String> resList) {		
-		
+		//Completing the path
 		resPath = makeAbsolutePath(resPath);
+		
+		//modifying according to the dots
 		if (resPath.contains("..") || resPath.contains("/./")) {
 			resPath = handleDots(resPath);
 		}
@@ -135,6 +140,7 @@ public class HtmlParser {
 			}
 		}
 		
+		//Rebuilding the new path.
 		StringBuilder result = new StringBuilder();
 		for (int i=0; i<resultUrlParts.size(); i++) {
 			
@@ -151,6 +157,7 @@ public class HtmlParser {
 	}
 
 	/**
+	 * Build a regex dynamically, depending on the extensions defined at config.ini.
 	 * 
 	 * @return regex in the form<br>
 	 * ["']([^"']+\.((bmp|jpg|png|gif|ico)|(avi|mpg|mp4|wmv|mov|flv|swf|mkv)|(pdf|doc|docx|xls|xlsx|ppt|pptx)))["']|(a\s*href\s*=\s*"(.+?)")
@@ -166,16 +173,25 @@ public class HtmlParser {
 	private String buildRegex() {
 		StringBuilder regexSB = new StringBuilder("[\"']([^\"']+\\.(");
 		
+		//add image extensions to regex
 		addExtToRegex(imgExts, regexSB);
 		regexSB.append("|");
+		//add video exts to regex
 		addExtToRegex(videoExts, regexSB);
 		regexSB.append("|");
+		//add docs exts to regex
 		addExtToRegex(docExts, regexSB);
 		regexSB.append("))[\"']|(a\\s*href\\s*=\\s*[\"'](.+?)[\"'])");
 		
 		return regexSB.toString();
 	}
 	
+	/**
+	 * Helper method for adding an extension handling to the regex in <code>buildRegex</code> method.
+	 * @param exts - the list of extensions to add.
+	 * @param regexSB - the StringBuilder that the extensions is added to.
+	 * @return the string that regexSB holds after adding the current extensions to it. 
+	 */
 	private String addExtToRegex(ArrayList<String> exts, StringBuilder regexSB) {
 		regexSB.append("(");
 		for (int i=0; i < exts.size(); i++) {
@@ -189,6 +205,12 @@ public class HtmlParser {
 		return regexSB.toString();
 	}
 	
+	/**
+	 * helper method for completing a given url, such as adding "http"
+	 * and removing trailing "/".
+	 * @param url
+	 * @return the modified url.
+	 */
 	private String parseUrl(String url) {
 		
 		if (!url.startsWith("http://")) {
@@ -201,6 +223,12 @@ public class HtmlParser {
 		return url.substring(0, pathEnd);
 	}
 	
+	/**
+	 * If a resource is linked to a local path (such as "/images/img.gif")
+	 * we complete it to be "http://www.crawled-domain.com/images/img.gif".
+	 * @param src - resource path.
+	 * @return absolute url for the resource.
+	 */
 	private String makeAbsolutePath(String src) {
 		String result = "";
 		if (src.startsWith("/")) {
@@ -227,54 +255,4 @@ public class HtmlParser {
 	public ArrayList<String> getHrefUrls() {
 		return links;
 	}
-	
-	//TODO: Remove when submitting
-	/*public static void main(String[] args) {
-		HashMap<String, ArrayList<String>> exts = new HashMap<>();
-		ArrayList<String> imageExtensions = new ArrayList<>();
-		ArrayList<String> videoExtensions = new ArrayList<>();
-		ArrayList<String> docsExtensions = new ArrayList<>();
-		
-		imageExtensions.add("bmp");
-		imageExtensions.add("jpg");
-		imageExtensions.add("png");
-		imageExtensions.add("gif");
-		imageExtensions.add("ico");
-		
-		videoExtensions.add("avi");
-		videoExtensions.add("mpg");
-		videoExtensions.add("mp4");
-		videoExtensions.add("wmv");
-		videoExtensions.add("mov");
-		videoExtensions.add("flv");
-		videoExtensions.add("swf");
-		videoExtensions.add("mkv");
-		
-		docsExtensions.add("pdf");
-		docsExtensions.add("doc");
-		docsExtensions.add("docx");
-		docsExtensions.add("xls");
-		docsExtensions.add("xlsx");
-		docsExtensions.add("ppt");
-		docsExtensions.add("pptx");
-		
-		exts.put("imageExtensions", imageExtensions);
-		exts.put("videoExtensions", videoExtensions);
-		exts.put("documentExtensions", docsExtensions);
-		
-		String html = "";
-		try {
-			BufferedReader reader = new BufferedReader(new FileReader("html_test/index.html"));
-			String line = "";
-			while ((line = reader.readLine()) != null) {
-				html += line;
-			}
-			reader.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		HtmlParser parser = new HtmlParser("http://www.blat.com/", html, exts);
-		parser.parse();
-	}*/
 }

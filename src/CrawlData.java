@@ -1,6 +1,10 @@
 import java.util.HashMap;
 import java.util.HashSet;
 
+/**
+ * Class for aggregating the crawling statistics.
+ * The data itself is stored in a HashMap, filled dynamically as the crawling progresses.
+ */
 public class CrawlData {
 
 	public static final String OPENNED_PORTS = "OPENNED_PORTS";
@@ -18,10 +22,12 @@ public class CrawlData {
 	public static final String CONNECTED_DOMAINS = "CONNECTED_DOMAINS";
 	public static final String AVG_RTT = "AVG_RTT";
 	
+	//Many threads uses this CrawlData instance, this is a defence for accessing the HashMap.
 	private final Object lock = new Object();
 	
 	private HashMap<String, Object> data;
 	
+	//Used to calculate the average RTT (sum / num).
 	private double sumRTT;
 	private double numRTT;
 	
@@ -65,6 +71,9 @@ public class CrawlData {
 		}
 	}
 	
+	/**
+	 * Resets the HashMap
+	 */
 	public void clear() {
 		synchronized (lock) {
 			init();

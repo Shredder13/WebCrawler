@@ -2,6 +2,10 @@ import java.net.MalformedURLException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Instead of using java.net.URL class, we made this class
+ * for the same purpose: separating a given URL parts and validating them. 
+ */
 public class HttpUrl {
 
 	private static final String URL_REGEX = "^(http|https)?:\\/\\/(.+?)(:(\\d{1,5}))?(\\/?|\\/.*)$";
@@ -13,6 +17,11 @@ public class HttpUrl {
 	private int port;
 	private String file;
 	
+	/**
+	 * parses the given URL.
+	 * @param url
+	 * @throws MalformedURLException if any parsing error arises.
+	 */
 	public HttpUrl(String url) throws MalformedURLException {
 		Matcher m = Pattern.compile(URL_REGEX).matcher(url);
 		if (m.matches()) {
@@ -73,25 +82,14 @@ public class HttpUrl {
 		file = newFile;
 	}
 	
+	/**
+	 * Returns a String in the form of "http://www.walla.com:80/folder1/file1.html" 
+	 */
 	@Override
 	public String toString() {
 		int p = port;
 		if (p == -1) p = 80;
 		return String.format("%s://%s:%d%s", protocol, host, port, file);
-	}
-	
-	public static void main(String[] args) {
-		try {
-			HttpUrl url = new HttpUrl("http://www.walla.com:80/dude/index.html");
-			System.out.println(url.getUrl());
-			System.out.println(url.getProtocol());
-			System.out.println(url.getHost());
-			System.out.println(url.getPort());
-			System.out.println(url.getFile());
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 	
 }

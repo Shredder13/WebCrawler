@@ -136,6 +136,7 @@ public class WebServerHttpResponse {
             } else if (file.getAbsolutePath().endsWith("index.html")) {
             	bFile = buildIndex(bFile);
             } else if (file.getAbsolutePath().endsWith("execResult.html")) {
+            	//Starts the crawl
             	bFile = startCrawler(bFile);
             }
             if (fis != null) {
@@ -150,11 +151,21 @@ public class WebServerHttpResponse {
         return bFile;
     }
     
+    /**
+     * Creates and starts the crawler. Return the HTML response to the caller:
+     * if it succeeded or not, with crawling histiry
+     * @param bFile - the response HTML template.
+     * @return
+     */
     private byte[] startCrawler(byte[] bFile) {
     	
     	WebCrawler crawler = WebCrawler.getInstance();
     	String html = new String(bFile);
+    	
+    	//form placeholder
     	String formHolder = "";
+    	
+    	//history builder
     	StringBuilder historyHolderSb = new StringBuilder();
     	
     	switch(crawler.getState()) {
@@ -164,14 +175,19 @@ public class WebServerHttpResponse {
     	default:
     	case IDLE:
 			try {
+				//Extract params from the form
 				HashMap<String, String> getParams = request.getPostParamsMap();
 				String host = URLDecoder.decode(getParams.get("txtDomain"),"utf-8");
 				boolean portScan = getParams.get("cbPortScan") != null && getParams.get("cbPortScan").equals("on");
 				boolean disrespectRobotsTxt = getParams.get("cbDisrespectRobots") != null && getParams.get("cbDisrespectRobots").equals("on");
                 String email = getParams.get("txtMail");
+                
+                
                 if (email != null) {
                     crawler.setEmail(URLDecoder.decode(email, "utf-8"));
                 }
+                
+                //Start the crawling flow
 				crawler.start(host, portScan, disrespectRobotsTxt);
     			formHolder = "Started crawler successfully!";
 			} catch (CrawlingException | UnsupportedEncodingException e) {
@@ -181,38 +197,35 @@ public class WebServerHttpResponse {
     		break;
     	}
     	
+    	//Build the history according to past-crawls
     	for (String link : crawler.getCrawlingHistory()) {
 			historyHolderSb.append(String.format("<a href=\"%s\">%s</a><br>", link, link.replace("_", "-")));
 		}
     	
+    	//Fill in the HTML response to the caller. formHolder holds the message "started sccessfully" or "failed",
+    	//and historyHolderSb holds the past crawls.
     	html = String.format(html, formHolder, historyHolderSb.toString());
     	
 		return html.getBytes();
 	}
     
-    private boolean verifyHidden() {
-    	String referer = request.getHeaders().get("referer");
-    	
-    	//No such header? return false
-    	if (referer == null) {
-    		return false;
-    	}
-    	
-    	return true;
-    }
-
+    /**
+     * Builds the index.html page. Loads the crawling history dynamically.
+     * @param bFile - the HTML template.
+     * @return the HTML page with a crawling history.
+     * @throws IOException if there's any error reading the crawling history.
+     */
 	private byte[] buildIndex(byte[] bFile) throws IOException {
     	
     	String indexHtml = new String(bFile);
     	StringBuilder historyHolderSb = new StringBuilder();    	
-		String formHolder = new String(readFile(new File("crawler_form.html")));
 		
     	WebCrawler crawler = WebCrawler.getInstance();
 		for (String link : crawler.getCrawlingHistory()) {
 			historyHolderSb.append(String.format("<a href=\"%s\">%s</a><br>", link, link.replace("_", "-")));
 		}
     	
-    	indexHtml = String.format(indexHtml, formHolder, historyHolderSb.toString());
+    	indexHtml = String.format(indexHtml, historyHolderSb.toString());
     	
     	return indexHtml.getBytes();
     }

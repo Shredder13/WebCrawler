@@ -15,6 +15,9 @@ import java.util.regex.Pattern;
 
 import com.sun.istack.internal.Nullable;
 
+/**
+ * CrawlerHttpConnection is used to perform a request to a given URL, and retrieve the response.
+ */
 public class CrawlerHttpConnection {
 	Socket socket;
 	
@@ -35,6 +38,11 @@ public class CrawlerHttpConnection {
 		response = new Response();
 	}
 	
+	/**
+	 * Extracts host, port & path from the given url.
+	 * @param urlStr
+	 * @throws MalformedURLException
+	 */
 	private void extractConnectionDetails(String urlStr) throws MalformedURLException {
 		HttpUrl url = new HttpUrl(urlStr);
 		
@@ -51,30 +59,44 @@ public class CrawlerHttpConnection {
 		}
 	}
 	
+	/**
+	 * Sends the HTTP request, and retrieve the response.
+	 * Also updates the average RTT.
+	 * @return a CrawlerHttpConnection.Response instance, representing the response. 
+	 * @throws UnknownHostException for the socket
+	 * @throws IOException if there's a problem with reading or writing to the socket.
+	 */
 	@Nullable
 	public Response getResponse() throws UnknownHostException, IOException {
 		
+		//extract host, port & path from the URL.
 		extractConnectionDetails(urlStr);
+		
 		Log.d("connecting...");
 		socket = new Socket(host, port);
 		Log.d("Sending Request...");
-		sendRequest();
 		
+		long startMillis = System.currentTimeMillis();
+		//Send request
+		sendRequest();
+		long endMillis = System.currentTimeMillis();
+		
+		//Reading response
 		BufferedReader socketInputStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		StringBuilder responseSb = new StringBuilder();
 		Log.d("Waiting for response...");
-		long startMillis = System.currentTimeMillis();
+		
 		int c;
 		while((c = socketInputStream.read()) != -1) {
 			responseSb.append((char) c);
 		}
-		long endMillis = System.currentTimeMillis();
 		Log.d("Done waiting.");
-		//System.out.println(responseSb);
 		
 		socket.close();
 		
 		response.rtt = endMillis - startMillis;
+		
+		//Return the response object only if the response is not broken.
 		if (parseHttpResponse(responseSb.toString())) {
 			return response;
 		}
@@ -82,6 +104,10 @@ public class CrawlerHttpConnection {
 		return null;
 	}
 	
+	/**
+	 * Sends the HTTP requset.
+	 * @throws IOException
+	 */
 	private void sendRequest() throws IOException {
 		
 		StringBuilder reqSb = new StringBuilder();
@@ -99,6 +125,12 @@ public class CrawlerHttpConnection {
 		socketOutputStream.flush();
 	}
 	
+	/**
+	 * Verifying that the response is well formed.
+	 * @param responseStr
+	 * @return
+	 * @throws IOException if there's any error reading the response.
+	 */
 	private boolean parseHttpResponse(String responseStr) throws IOException {
 		CRLFBufferedReader reader = new CRLFBufferedReader(new StringReader(responseStr));
 		
@@ -106,7 +138,7 @@ public class CrawlerHttpConnection {
 		String resLine = reader.readLine();
 		boolean resLineOk = validateResponseLine(resLine);
 		
-		//Read the headers, validate that content-length && content-type exists.
+		//Read the headers
 		String line;
 		ArrayList<String> headersList = new ArrayList<>();
 		while(!(line = reader.readCRLFLine()).equals(WebServer.CRLF)) {
@@ -131,6 +163,11 @@ public class CrawlerHttpConnection {
 		return resLineOk;
 	}
 
+	/**
+	 * validating that the fifrst line of the response is well formed.
+	 * @param resLine
+	 * @return
+	 */
 	private boolean validateResponseLine(String resLine) {
 		Pattern p = Pattern.compile("^(HTTP\\/1\\.1|HTTP\\/1\\.0) ([0-9]+ \\w[\\w\\s]*)$");
 		Matcher m = p.matcher(resLine);
@@ -140,6 +177,8 @@ public class CrawlerHttpConnection {
 			
 			boolean httpVerOk = httpVersion != null && (httpVersion.equals(HTTP_VERSION.HTTP_1_0.toString())
 														|| httpVersion.equals(HTTP_VERSION.HTTP_1_1.toString()));
+			
+			//Accespts only HTTP 200 OK & 301 MOVED codes. We ignore others.
 			boolean httpCodeOk = httpCode != null && (httpCode.equals(HTTP_CODE.C200_OK.toString())
 														|| httpCode.equals(HTTP_CODE.ERR_301_MOVED_PERMANENTLY.toString()));
 			
@@ -156,9 +195,6 @@ public class CrawlerHttpConnection {
 	private void fillResponseHeaders(List<String> headersList) {
 		Pattern pattern = Pattern.compile("^([^ ]+): ?(.+)\\r\\n$");
 		
-		//boolean hasContentLength = false;
-		//boolean hasContentType = false;
-		
 		for (String s : headersList) {
 			Matcher matcher = pattern.matcher(s); 
 			if (matcher.matches()) {
@@ -166,16 +202,15 @@ public class CrawlerHttpConnection {
 				String value = matcher.group(2).toLowerCase();
 				
 				if (key != null && value != null) {
-					//if (!hasContentLength) hasContentLength = key.equals("content-length");
-					//if (!hasContentType) hasContentType = key.equals("content-type");
 					response.headers.put(key, value);
 				}
 			}
 		}
-		
-		//return /*hasContentLength &&*/ hasContentType;
 	}
 	
+	/**
+	 * Class representing the response to the matching request.
+	 */
 	public class Response {
 		private HTTP_VERSION version;
 		private HTTP_CODE code;
@@ -212,15 +247,4 @@ public class CrawlerHttpConnection {
 			}
 		}
 	}
-	
-	/*public static void main(String[] args) {
-		CrawlerHttpConnection req = new CrawlerHttpConnection(HTTP_METHOD.HEAD, "http://www.sheldonbrown.com/", HTTP_VERSION.HTTP_1_0);
-		try {
-			req.getResponse();
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}*/
 }

@@ -24,7 +24,9 @@ public class PortScanner {
 	private final static int MAX_THREADS = 10;
 	
 	/** Timeout for a single port scan. */
-	private final static int SINGLE_PORT_TIMEOUT = 500;	
+	private final static int SINGLE_PORT_TIMEOUT = 500;
+	
+	final Object waitForCompletion = new Object();
 	
 	private String host;
 	private ThreadPool threadPool;
@@ -33,6 +35,10 @@ public class PortScanner {
 	/** Listener for when a single-port scan have finished */
 	private IOnSinglePortScanned onSinglePortScannedListener;
 	
+	/**
+	 * Creates a new PortScanner instance, and raises a threadpool of <code>MAX_THREADS</code> workers.
+	 * @param host - he host to scan.
+	 */
 	public PortScanner(String host) {
 		this.host = host.replace("http://", "");
 		if (this.host.endsWith("/")) {
@@ -45,11 +51,20 @@ public class PortScanner {
 		Log.d("Port scanner is ready");
 	}
 	
-	final Object waitForCompletion = new Object();
+	/**
+	 * Starts a synchronous multi-threaded port scan. The port scanning is multithreaded, but the caller
+	 * of this method will wait until the end of execution.
+	 * @param start - port range start, inclusive
+	 * @param end - port range end, inclusive
+	 * @return a list of opened ports
+	 * @throws PortScannerException if any error arises while scanning.
+	 */
 	public ArrayList<Integer> getOpennedPortsSync(int start, int end) throws PortScannerException {
 		
 		final ArrayList<Integer> result = new ArrayList<>();
 		
+		//A listener for the port scanning process. When the scan is finished, it notifies that
+		//the caller function can continue.
 		IOnPortScanFinished finishScanningAll = new IOnPortScanFinished() {
 			@Override
 			public void onPortScanFinished(ArrayList<Integer> openedPorts) {
@@ -64,6 +79,7 @@ public class PortScanner {
 		
 		try {
 			synchronized (waitForCompletion) {
+				//Block until all port range is finished.
 				waitForCompletion.wait();
 			}
 		} catch (InterruptedException e) {
@@ -73,6 +89,13 @@ public class PortScanner {
 		return result;
 	}
 	
+	/**
+	 * Scans a given port range asynchronously.
+	 * @param start
+	 * @param end
+	 * @param listener - listener when all ports were scanned
+	 * @throws PortScannerException - if the port scanner is shutdown or the given port range is illegal.
+	 */
 	private void startScanAsync(int start, int end, final IOnPortScanFinished listener) throws PortScannerException {
 		
 		if (isShutDown) {
@@ -89,7 +112,7 @@ public class PortScanner {
 		final int numOfPorts = end - start;
 		Log.d(String.format("numOfPorts = %d", numOfPorts));
 		
-		//When a port was scanned, the listener is notified
+		//When a port was scanned, the single-port listener is notified
 		onSinglePortScannedListener = new IOnSinglePortScanned() {
 			
 			int scannedPortCount = 0;
@@ -97,6 +120,7 @@ public class PortScanner {
 			@Override
 			public synchronized void onSinglePortScanned(int port, boolean isOpen) {
 				if (isOpen) {
+					//port is open --> add it to the list.
 					openedPorts.add(port);
 					Log.d(String.format("Port %d is open!", port));
 				}
@@ -129,6 +153,12 @@ public class PortScanner {
 		IOnSinglePortScanned listener;
 		Socket socket = new Socket();
 		
+		/**
+		 * Creates a PortScanTask on a given port. When it is finish the <code>listener</code>
+		 * is notified.
+		 * @param port
+		 * @param listener
+		 */
 		public PortScanTask(int port, IOnSinglePortScanned listener) {
 			this.port = port;
 			this.listener = listener;
@@ -166,21 +196,4 @@ public class PortScanner {
 		isShutDown = true;
 		threadPool.shutDown();
 	}
-	
-	/*public static void main(String[] args) {
-		final PortScanner scanner = new PortScanner("www.walla.co.il");
-		try {
-			scanner.startScanAsync(1, 1024, new IOnPortScanFinished() {
-				
-				@Override
-				public void onPortScanFinished(ArrayList<Integer> openedPorts) {
-					Log.d("Port scan have finished");
-					scanner.shutdown();
-				}
-			});
-		} catch (PortScannerException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}*/
 }

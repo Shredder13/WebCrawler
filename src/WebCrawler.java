@@ -10,7 +10,10 @@ import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
+/**
+ * The WebCrawler is a singleton class that is in charge of executing the crawling mission, end-to-end. 
+ *
+ */
 public class WebCrawler {
 	
 	enum State {
@@ -19,9 +22,11 @@ public class WebCrawler {
 
 	public static final String ROBOTS = "robots.txt";
 
+	//For robots.txt "disallow" and "allow"
 	public ArrayList<Pattern> blackList = new ArrayList<>();
 	public ArrayList<Pattern> whiteList = new ArrayList<>();
 	
+	//Data from the config.ini
 	public static int maxDownloaders = 10;
 	public static int maxAnalyzers = 2;
 	public static ArrayList<String> imageExtensions = new ArrayList<>();
@@ -33,6 +38,8 @@ public class WebCrawler {
 	private State state = State.IDLE;
 	private final Object stateLock = new Object();
 	
+	//The downlaoders & analyzers. Each one of them is a threadpool, with max-threads property.
+	//They send tasks to each other in the downloader-analyzer loop.
 	private ThreadPool downloadersPool;
 	private ThreadPool analyzersPool;
 	
@@ -45,6 +52,9 @@ public class WebCrawler {
 	private String hostUrl;
 	private String email = "";
 	
+	/**
+	 * Creates the WebCrawler instance. Starting the downloaders & analyzer pools.
+	 */
 	private WebCrawler() {
 		downloadersPool = new ThreadPool(maxDownloaders);
 		analyzersPool = new ThreadPool(maxAnalyzers);
@@ -66,16 +76,26 @@ public class WebCrawler {
 		return sInstance;
 	}
 	
+	/**
+	 * @return the crawled domain
+	 */
 	public String getHostUrl() {
 		return hostUrl;
 	}
 
+	/**
+	 * @return the crawler state, one of <code>IDLE, RUNNING</code>
+	 */
 	public State getState() {
 		synchronized(stateLock) {
 			return state;
 		}
 	}
-
+	
+	/**
+	 * Sets the crawler state, one of <code>IDLE, RUNNING</code>
+	 * @param s - the state.
+	 */
 	private void setState(State s) {
 		synchronized(stateLock) {
 			Log.d("Crawler state is " + s.toString());
@@ -87,6 +107,9 @@ public class WebCrawler {
 		this.email = email;
 	}
 	
+	/**
+	 * @return the statistics object.
+	 */
 	public CrawlData getCrawlData() {
 		return crawlData;
 	}
@@ -99,26 +122,34 @@ public class WebCrawler {
 		visitedUrls.add(url);
 	}
 	
+	/**
+	 * @return a list of past crawled domains.
+	 */
 	public ArrayList<String> getCrawlingHistory() {
 		ArrayList<String> result = new ArrayList<>();
 		
-		try{
+		try {
 			String root = WebServer.root;
 			File rootFolder = new File(root);
+			
+			//List files with a certain name pattern (of statistics pages).
 			File[] files = rootFolder.listFiles(new FilenameFilter() {
 				
 				@Override
 				public boolean accept(File dir, String name) {
+					//list the file only if the name matches the pattern
 					return name.matches("^.+_\\d+_\\d+\\.html");
 				}
 			});	
 			
+			//Convert the array into a list
 			if (files != null) {
 				for (File f : files) {
 					result.add(f.getName());
 				}
 			}
 			
+			//Sort the list for the good sake.
 			Collections.sort(result, new Comparator<String>() {
 
 				@Override
@@ -133,6 +164,11 @@ public class WebCrawler {
 		return result;
 	}
 	
+	/**
+	 * modifying the given <code>host</code> for crawling. Adding "http://" for example.
+	 * @param host
+	 * @return
+	 */
 	private String getFixedHostUrl(String host) {
 		StringBuilder result = new StringBuilder(host.replace("\\", "/"));
 		if (!(host.startsWith("http://") || host.startsWith("https://"))) {
@@ -144,13 +180,25 @@ public class WebCrawler {
 		return result.toString();
 	}
 	
+	/**
+	 * Starts the crawling process. If requested a port scan is made, and also handling robots.txt as requested.
+	 * 
+	 * @param aHost - the given host to crawl on.
+	 * @param portScan - if to perform a port scan
+	 * @param disrespectRobotsTxt
+	 * @throws CrawlingException if there's an error accessing the given host.
+	 */
 	public void start(String aHost, boolean portScan, boolean disrespectRobotsTxt) throws CrawlingException {
 		Log.d(String.format("WebCrawler.start -> host = %s", aHost));
+		
+		//complete the host url
 		String fixedHost = getFixedHostUrl(aHost);
+		
 		Log.d(String.format("WebCrawler.start -> fixed host = %s", fixedHost));
+		
 		try {
+			//Make sure that the host is reachable.
 			HttpUrl hostUrlObj = new HttpUrl(fixedHost);
-			
 			InetAddress.getByName(hostUrlObj.getHost()).isReachable(1000);
 			hostUrl = fixedHost;
 		} catch (UnknownHostException e) {
@@ -160,6 +208,7 @@ public class WebCrawler {
 		}
 		
 		if (portScan) {
+			//Starts the multi-threaded port scan
 			try {
 				PortScanner ps = new PortScanner(fixedHost);
 				opennedPorts = ps.getOpennedPortsSync(1, 1024);
@@ -168,7 +217,8 @@ public class WebCrawler {
 				e.printStackTrace();
 			}
 		}
-
+		
+		//handle robots.txt
 		if (disrespectRobotsTxt) {
 			crawlData.put(CrawlData.DISRESPECT_ROBOTS_TXT, true);
 		}
@@ -181,6 +231,10 @@ public class WebCrawler {
 		setState(State.RUNNING); 
 	}
 	
+	/**
+	 * Each time a downloader or analyzer task is finished, it checks if the process is done.
+	 * When it is, th statistics page is built and the crawler resets.
+	 */
 	public void checkIfFinished() {
 		if (AnalyzerTask.getNumOfAnalyzersAlive() == 0 && DownloaderTask.getNumOfDownloadersAlive() == 0) {
 			buildStatisticsPage();
@@ -279,13 +333,4 @@ public class WebCrawler {
 
 
 	}
-	
-	/*public static void main(String[] args) {
-		WebCrawler crawler = WebCrawler.getInstance();
-		try {
-			crawler.start("127.0.0.1:8080/", false, false);
-		} catch (CrawlingException e) {
-			e.printStackTrace();
-		}
-	}*/
 }
