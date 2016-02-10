@@ -152,7 +152,7 @@ public class DownloaderTask extends Task {
 				webCrawler.getCrawlData().updateAvgRTT(response.getRTT());
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			Log.d(e.getMessage());
 		} finally {
 			if (conn != null) {
 				conn.close();

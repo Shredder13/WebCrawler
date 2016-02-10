@@ -1,0 +1,1 @@
+call java -cp .;javax.mail.jar WebServer

@@ -1,7 +1,15 @@
 - Extracting resources which are not in <img> or <a> tag only (such as from javascripts, "background" attribute of <body> tag, etc).
+	Look at HtmlParser.buildRegex() in order to see how the bonus is achieved.
+	We build a regex that catch images independent of their html tag.
 
 - Multi-threaded port scanner, for scanning fast.
+	PortScanner.java
 
 - handling URLs that has ".." in their path, such as http://www.website.com/folder/../index.html
+	HtmlParser.handleDots()
 
 - handling "301 moved permanently" responses from crawled websites.
+	under DownloaderTask.run()
+
+- sending an email when the crawling is finished (the email is from nbtklab2@gmail.com).
+	WebCrawler.sendEmail()

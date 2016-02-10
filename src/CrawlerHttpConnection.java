@@ -14,8 +14,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.sun.istack.internal.Nullable;
-
 /**
  * CrawlerHttpConnection is used to perform a request to a given URL, and retrieve the response.
  */
@@ -67,7 +65,6 @@ public class CrawlerHttpConnection {
 	 * @throws UnknownHostException for the socket
 	 * @throws IOException if there's a problem with reading or writing to the socket.
 	 */
-	@Nullable
 	public Response getResponse() throws UnknownHostException, IOException {
 		
 		//extract host, port & path from the URL.

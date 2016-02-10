@@ -7,8 +7,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 
 /**
  * The WebCrawler is a singleton class that is in charge of executing the crawling mission, end-to-end. 
@@ -235,17 +244,56 @@ public class WebCrawler {
 	 * Each time a downloader or analyzer task is finished, it checks if the process is done.
 	 * When it is, th statistics page is built and the crawler resets.
 	 */
-	public void checkIfFinished() {
-		if (AnalyzerTask.getNumOfAnalyzersAlive() == 0 && DownloaderTask.getNumOfDownloadersAlive() == 0) {
+	public synchronized void checkIfFinished() {
+		if (state.equals(State.RUNNING) && AnalyzerTask.getNumOfAnalyzersAlive() == 0 && DownloaderTask.getNumOfDownloadersAlive() == 0) {
 			buildStatisticsPage();
-			reset();
-			Log.d("Finished crawling!");
+			Log.d("Finished crawling! Sending email to " + email);
 			sendEmail();
+			reset();
 		}
 	}
 
 	private void sendEmail() {
-		// TODO: complete
+		if (email != null && email.length() > 0) {
+			String to = email;
+			String from = "nbtklab2@gmail.com";
+			final String username = "nbtklab2";
+			final String password = "!1Password1!";
+
+			// Assuming you are sending email through relay.jangosmtp.net
+			String host = "smtp.gmail.com";
+
+			Properties props = new Properties();
+			props.put("mail.smtp.auth", "true");
+			props.put("mail.smtp.starttls.enable", "true");
+			props.put("mail.smtp.host", host);
+			props.put("mail.smtp.port", "587");
+
+			// Get the Session object.
+			Session session = Session.getInstance(props, new javax.mail.Authenticator() {
+				protected PasswordAuthentication getPasswordAuthentication() {
+					return new PasswordAuthentication(username, password);
+				}
+			});
+
+			try {
+				Message message = new MimeMessage(session);
+				message.setFrom(new InternetAddress(from));
+				message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
+				message.setSubject("Crawl have finished!");
+				message.setText("Crawl to " + getHostUrl() + " have finished!");
+
+				// Send message
+				Transport.send(message);
+
+				Log.d("Email sent successfully.");
+
+			} catch (MessagingException e) {
+				Log.d(e.getMessage());
+			}
+		} else {
+			Log.d("No email address was specified!");
+		}
 	}
 	
 	private void buildStatisticsPage() {
@@ -261,6 +309,7 @@ public class WebCrawler {
 		hostUrl = "";
 		crawlData.clear();
 		setState(State.IDLE);
+		Log.d("Crawler is ready for another round!");
 	}
 
 	/**

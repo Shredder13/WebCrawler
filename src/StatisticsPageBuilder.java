@@ -138,9 +138,11 @@ public class StatisticsPageBuilder {
 		htmlSb.append("<p>Connected domains:<br><ul>");
 		
 		for (String domain : connectedDomains) {
-			htmlSb.append("<li>").append(domain);
+			htmlSb.append("<li>");
 			if (historyDomains.contains(domain)) {
-				htmlSb.append(String.format(" : <a href=\"http://%s/\">%s</a>", domain, domain));
+				htmlSb.append(String.format("<a href=\"http://%s/\">%s</a>", domain, domain));
+			} else {
+				htmlSb.append(domain);
 			}
 			htmlSb.append("</li>");
 		}
