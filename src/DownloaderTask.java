@@ -64,12 +64,12 @@ public class DownloaderTask extends Task {
 
 			//check against robots.txt
 			if (checkLists(cd, url)) {
-				return;
+				throw new Exception("balacklisted by robots.txt");
 			}
 
 			//if visited, do not download. This is a HashSet --> contains is O(1).
 			if (webCrawler.getVisitedUrls().contains(url)) {
-				return;
+				throw new Exception("URL is visited");
 			} else {
 				Log.d(String.format("Url not yet visited! processing further : url = %s", url));
 				webCrawler.addVisitedURL(url);
@@ -201,8 +201,9 @@ public class DownloaderTask extends Task {
 		synchronized (numDownloadersAliveLock) {
 			numDownloadersAlive--;
 			Log.d("remaining items in Downloaders queue: " + numDownloadersAlive);
-			webCrawler.checkIfFinished();
 		}
+		
+		webCrawler.checkIfFinished();
 	}
 
 	public static int getNumOfDownloadersAlive() {

@@ -6,6 +6,7 @@ import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -72,24 +73,34 @@ public class CrawlerHttpConnection {
 		//extract host, port & path from the URL.
 		extractConnectionDetails(urlStr);
 		
-		Log.d("connecting...");
+		Log.d("connecting... " + host);
 		socket = new Socket(host, port);
+		socket.setSoTimeout(10000);
 		Log.d("Sending Request...");
 		
 		long startMillis = System.currentTimeMillis();
 		//Send request
 		sendRequest();
-		long endMillis = System.currentTimeMillis();
+		
 		
 		//Reading response
 		BufferedReader socketInputStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		StringBuilder responseSb = new StringBuilder();
 		Log.d("Waiting for response...");
 		
-		int c;
-		while((c = socketInputStream.read()) != -1) {
-			responseSb.append((char) c);
+		long endMillis;
+		try {
+			int c = socketInputStream.read();
+			endMillis = System.currentTimeMillis();
+			if (c != -1) responseSb.append((char) c);
+			while((c = socketInputStream.read()) != -1) {
+				responseSb.append((char) c);
+			}
+		} catch (SocketTimeoutException e) {
+			//e.printStackTrace();
+			endMillis = System.currentTimeMillis();
 		}
+		
 		Log.d("Done waiting.");
 		
 		socket.close();

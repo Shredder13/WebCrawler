@@ -153,7 +153,7 @@ public class WebServerHttpResponse {
     
     /**
      * Creates and starts the crawler. Return the HTML response to the caller:
-     * if it succeeded or not, with crawling histiry
+     * if it succeeded or not.
      * @param bFile - the response HTML template.
      * @return
      */
@@ -197,14 +197,8 @@ public class WebServerHttpResponse {
     		break;
     	}
     	
-    	//Build the history according to past-crawls
-    	for (String link : crawler.getCrawlingHistory()) {
-			historyHolderSb.append(String.format("<a href=\"%s\">%s</a><br>", link, link.replace("_", "-")));
-		}
-    	
-    	//Fill in the HTML response to the caller. formHolder holds the message "started sccessfully" or "failed",
-    	//and historyHolderSb holds the past crawls.
-    	html = String.format(html, formHolder, historyHolderSb.toString());
+    	//Fill in the HTML response to the caller. formHolder holds the message "started sccessfully" or "failed".
+    	html = String.format(html, formHolder);
     	
 		return html.getBytes();
 	}

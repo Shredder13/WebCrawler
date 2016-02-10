@@ -103,7 +103,13 @@ public class HtmlParser {
 	 * @param resPath - the resource path
 	 * @param resList - the relevant resource list for the resource.
 	 */
-	private void addResourceToList(String resPath, ArrayList<String> resList) {		
+	private void addResourceToList(String resPath, ArrayList<String> resList) {
+		
+		if (resPath.contains("files")) {
+			int a=3;
+			a++;
+		}
+		
 		//Completing the path
 		resPath = makeAbsolutePath(resPath);
 		
@@ -213,14 +219,21 @@ public class HtmlParser {
 	 */
 	private String parseUrl(String url) {
 		
+		url = url.replace('\\', '/');
 		if (!url.startsWith("http://")) {
 			url = "http://" + url;
 		}
 		
-		url = url.replace('\\', '/');
-		int pathEnd = url.lastIndexOf("/");
-		//Return the url without trailing "/".
-		return url.substring(0, pathEnd);
+		int hostPartEnd = url.lastIndexOf("/");
+		if (hostPartEnd != -1 && hostPartEnd > "https://".length()) {
+			if (url.contains("files")) {
+				int a=3;
+				a++;
+			}
+			url = url.substring(0, hostPartEnd);
+		}
+		
+		return url;
 	}
 	
 	/**

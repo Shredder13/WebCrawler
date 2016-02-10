@@ -96,8 +96,9 @@ public class AnalyzerTask extends Task {
 		synchronized (numAnalyzersAliveLock) {
 			numAnalyzersAlive--;
 			Log.d("remaining items in Analyzers queue: " + numAnalyzersAlive);
-			webCrawler.checkIfFinished();
 		}
+		
+		webCrawler.checkIfFinished();
 	}
 	public static int getNumOfAnalyzersAlive() {
 		synchronized (numAnalyzersAliveLock) {
