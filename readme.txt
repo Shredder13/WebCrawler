@@ -21,8 +21,6 @@ Our webserver is implemented as described below:
 			and decreased when the task is DONE, after it submits a task to the AnalyzersPool. That way we assure that the process isn't finished too early.
 		Note2: same thing happens for analyzers counter.
 
-
-
-- The WebServer holds a CrawlerData instance - which aggregates the crawling statistics.
-- When the crawling is finished, a statistics page is created (look at StatisticsPageBuilder.java).
 - To perform network connection, the class CrawlerHttpConnection is used.
+- The WebServer holds a CrawlerData instance - which aggregates the crawling statistics.
+- When the crawling is finished, a statistics page is created (look at StatisticsPageBuilder.java), and an email is sent using javax.mail API (jar included in sources & serverroot folder).

@@ -245,7 +245,7 @@ public class WebCrawler {
 	 * When it is, th statistics page is built and the crawler resets.
 	 */
 	public synchronized void checkIfFinished() {
-		if (state.equals(State.RUNNING) && AnalyzerTask.getNumOfAnalyzersAlive() == 0 && DownloaderTask.getNumOfDownloadersAlive() == 0) {
+		if (getState().equals(State.RUNNING) && AnalyzerTask.getNumOfAnalyzersAlive() == 0 && DownloaderTask.getNumOfDownloadersAlive() == 0) {
 			buildStatisticsPage();
 			Log.d("Finished crawling! Sending email to " + email);
 			sendEmail();
