@@ -23,4 +23,5 @@ Our webserver is implemented as described below:
 
 - To perform network connection, the class CrawlerHttpConnection is used.
 - The WebServer holds a CrawlerData instance - which aggregates the crawling statistics.
+- NOTE: we count pages & images that return HTTP 200 OK only.
 - When the crawling is finished, a statistics page is created (look at StatisticsPageBuilder.java), and an email is sent using javax.mail API (jar included in sources & serverroot folder).

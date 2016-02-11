@@ -27,12 +27,13 @@ public class StatisticsPageBuilder {
 		try {
 			StringBuilder htmlSb = new StringBuilder("<html><head></head><body>");
 			
+			preStatistics(htmlSb);
 			robots(htmlSb);
 			images(htmlSb);
 			videos(htmlSb);
 			docs(htmlSb);
 			pages(htmlSb);
-			inernalExternalLinkgs(htmlSb);
+			inernalExternalLinks(htmlSb);
 			connectedDomains(htmlSb);
 			openedPorts(htmlSb);
 			avgRtt(htmlSb);
@@ -52,6 +53,10 @@ public class StatisticsPageBuilder {
 		}
 	}
 	
+	private void preStatistics(StringBuilder htmlSb) {
+		htmlSb.append("<p>Note: we count links, images, videos, documents & pages that returned HTTP 200 OK only!</p>");
+	}
+
 	/**
 	 * Insert the main-page link part to the HTML builder
 	 * @param htmlSb
@@ -153,7 +158,7 @@ public class StatisticsPageBuilder {
 	 * Insert the internal & external links statistics part to the HTML builder
 	 * @param htmlSb
 	 */
-	private void inernalExternalLinkgs(StringBuilder htmlSb) {
+	private void inernalExternalLinks(StringBuilder htmlSb) {
 		String numOfInternalLinks = cd.get(CrawlData.NUM_OF_INTERNAL_LINKS).toString();
 		String numOfExternalLinks = cd.get(CrawlData.NUM_OF_EXTERNAL_LINKS).toString();
 		htmlSb.append(String.format("<p># of internal links %s.<br># of external links %s.</p>", numOfInternalLinks, numOfExternalLinks));
