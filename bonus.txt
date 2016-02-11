@@ -8,7 +8,7 @@
 - handling URLs that has ".." in their path, such as http://www.website.com/folder/../index.html
 	HtmlParser.handleDots()
 
-- handling "301 moved permanently" responses from crawled websites.
+- handling "301 Moved Permanently" and "302 Found" responses from crawled websites.
 	under DownloaderTask.run()
 
 - sending an email when the crawling is finished (the email is from nbtklab2@gmail.com).

@@ -188,7 +188,8 @@ public class CrawlerHttpConnection {
 			
 			//Accespts only HTTP 200 OK & 301 MOVED codes. We ignore others.
 			boolean httpCodeOk = httpCode != null && (httpCode.equals(HTTP_CODE.C200_OK.toString())
-														|| httpCode.equals(HTTP_CODE.ERR_301_MOVED_PERMANENTLY.toString()));
+														|| httpCode.equals(HTTP_CODE.ERR_301_MOVED_PERMANENTLY.toString())
+														|| httpCode.equals(HTTP_CODE.ERR_302_FOUND.toString()));
 			
 			if (httpVerOk && httpCodeOk) {
 				response.version = HTTP_VERSION.fromString(httpVersion);

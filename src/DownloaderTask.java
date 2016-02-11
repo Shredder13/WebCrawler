@@ -89,7 +89,8 @@ public class DownloaderTask extends Task {
 				if (response != null) {
 					switch(response.getCode()) {
 					case ERR_301_MOVED_PERMANENTLY:
-						handle301Moved(response);
+					case ERR_302_FOUND:
+						handle3xxCodes(response);
 						break;
 					default:
 					case C200_OK:
@@ -122,8 +123,9 @@ public class DownloaderTask extends Task {
 					
 					switch(response.getCode()) {
 					case ERR_301_MOVED_PERMANENTLY:
+					case ERR_302_FOUND:
 						//BONUS: handle "301 moved permanently" for images
-						handle301Moved(response);
+						handle3xxCodes(response);
 						break;
 					default:
 					case C200_OK:
@@ -167,7 +169,7 @@ public class DownloaderTask extends Task {
 	 * @param response the response object for the request
 	 * @throws MalformedURLException if the move URL is incorrect.
 	 */
-	private void handle301Moved(CrawlerHttpConnection.Response response) throws MalformedURLException {
+	private void handle3xxCodes(CrawlerHttpConnection.Response response) throws MalformedURLException {
 		String movedUrl = response.getHeaders().get("location");
 		Log.d("Moved permanently to " + movedUrl);
 		if (movedUrl != null) {
