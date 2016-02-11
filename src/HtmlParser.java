@@ -1,3 +1,4 @@
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.regex.Matcher;
@@ -105,11 +106,6 @@ public class HtmlParser {
 	 */
 	private void addResourceToList(String resPath, ArrayList<String> resList) {
 		
-		if (resPath.contains("files")) {
-			int a=3;
-			a++;
-		}
-		
 		//Completing the path
 		resPath = makeAbsolutePath(resPath);
 		
@@ -166,7 +162,7 @@ public class HtmlParser {
 	 * Build a regex dynamically, depending on the extensions defined at config.ini.
 	 * 
 	 * @return regex in the form<br>
-	 * ["']([^"']+\.((bmp|jpg|png|gif|ico)|(avi|mpg|mp4|wmv|mov|flv|swf|mkv)|(pdf|doc|docx|xls|xlsx|ppt|pptx)))["']|(a\s*href\s*=\s*"(.+?)")
+	 * ["']([^"']+\.((bmp|jpg|png|gif|ico)|(avi|mpg|mp4|wmv|mov|flv|swf|mkv)|(pdf|doc|docx|xls|xlsx|ppt|pptx)))["']|(a\s*href\s*=\s*["'](.+?)["'])
 	 * <br>
 	 * group #1 - if not empty, it is a file with one of the extensions.<br>
 	 * group #2 - indicates the extension.<br>
@@ -187,7 +183,7 @@ public class HtmlParser {
 		regexSB.append("|");
 		//add docs exts to regex
 		addExtToRegex(docExts, regexSB);
-		regexSB.append("))[\"']|(a\\s*href\\s*=\\s*[\"'](.+?)[\"'])");
+		regexSB.append("))[\"']|(a\\s+href\\s*=\\s*[\"'](.+?)[\"'])");
 		
 		return regexSB.toString();
 	}
@@ -226,10 +222,6 @@ public class HtmlParser {
 		
 		int hostPartEnd = url.lastIndexOf("/");
 		if (hostPartEnd != -1 && hostPartEnd > "https://".length()) {
-			if (url.contains("files")) {
-				int a=3;
-				a++;
-			}
 			url = url.substring(0, hostPartEnd);
 		}
 		
@@ -245,7 +237,13 @@ public class HtmlParser {
 	private String makeAbsolutePath(String src) {
 		String result = "";
 		if (src.startsWith("/")) {
-			result = absServerPath + src;
+			try {
+				HttpUrl url = new HttpUrl(absServerPath);
+				url.getHost();
+				result = String.format("%s://%s%s", url.getProtocol(), url.getHost(), src);
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			}
 		} else if (!src.matches("^(http|https)://.+")) {
 			//if the source starts with something different than http://
 			result =  absServerPath + "/" + src;
